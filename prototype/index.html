@@ -333,6 +333,14 @@ body{overflow:hidden}
   .phone,.phone.wide{border:0;border-radius:0;box-shadow:none}
 }
 </style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2EAB8F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Соседи">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 </head>
 <body>
 <div class="pbar">
@@ -1150,6 +1158,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeD()});
 phone.addEventListener('click',e=>{if(!e.target.closest('button,[data-go],.chip,.chk,.opt,.pollo,a')){phone.classList.add('hint');clearTimeout(phone._h);phone._h=setTimeout(()=>phone.classList.remove('hint'),700)}});
 go(S[location.hash.slice(1)]?location.hash.slice(1):'confirm',false);
 
+</script>
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 </script>
 </body>
 </html>
