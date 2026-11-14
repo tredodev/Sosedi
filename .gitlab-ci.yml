@@ -1,14 +1,43 @@
-# Сборка приложения в один файл и публикация прототипа на GitLab Pages.
-stages: [build, deploy]
+# Сборка приложения, скачивание сборки, релизы по тегам и GitLab Pages.
+#
+# Скачать последнюю сборку ветки main:
+#   https://<gitlab>/<группа>/<проект>/-/jobs/artifacts/main/download?job=build
+# Открыть один файл сборки:
+#   https://<gitlab>/<группа>/<проект>/-/jobs/artifacts/main/raw/dist/index.html?job=build
+
+stages: [build, release, deploy]
 
 build:
   stage: build
   image: node:20-alpine
   script:
     - node build.mjs
+    - cp capabilities.json dist/
   artifacts:
+    name: "sosedi-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
     paths: [dist/]
-    expire_in: 30 days
+    expire_in: never
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: [build]
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Релиз $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Соседи $CI_COMMIT_TAG"
+    description: "Сборка рабочей версии Соседей. Файл index.html публикуется как артефакт claude.ai с возможностями из capabilities.json."
+    assets:
+      links:
+        - name: "Сборка целиком (zip)"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/download?job=build"
+          link_type: package
+        - name: "index.html"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/dist/index.html?job=build"
+          link_type: other
 
 pages:
   stage: deploy
