@@ -43,8 +43,9 @@ const C={db:null,user:null,assets:null,dl:null,sample:null,uid:null,admin:false,
 const D={zks:[],waitlist:[],settings:{},me:null,profile:null,loaded:{},err:null,toasts:[],
   members:[],posts:[],comments:[],outages:[],masters:[],reviews:[],jobs:[],alerts:[],osireq:[],news:[],ballots:[],bookings:[],
   groupbuys:[],tasks:[],biz:[],parking:[],crowd:[],leads:[],offers:[],orders:[],fees:[],invites:[],shop:[],passes:[],events:[],msgs:[],
-  votes:[],ovotes:[],acks:[]};
-const ZK_COLS=['members','posts','comments','outages','masters','reviews','jobs','alerts','osireq','news','ballots','bookings','groupbuys','tasks','biz','parking','crowd','leads','offers','orders','fees','invites','shop','passes','events'];
+  votes:[],ovotes:[],acks:[],floods:[],claims:[]};
+const BLOBS={}; // фото, выбранные в этой сессии: для заполнения объявления по фото
+const ZK_COLS=['members','posts','comments','outages','masters','reviews','jobs','alerts','osireq','news','ballots','bookings','groupbuys','tasks','biz','parking','crowd','leads','offers','orders','fees','invites','shop','passes','events','floods','claims'];
 const SUBS={};
 let ZID=null;
 const Z=()=>ZID;
@@ -148,7 +149,7 @@ const appUrl=h=>{const base=location.href.split('#')[0];return base+'#'+h};
 async function pickPhotos(max=6){if(!C.assets){toast('Загрузка фото доступна редакторам и участникам с правом записи','err');return[]}
   return new Promise(res=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;
     inp.onchange=async()=>{const files=[...inp.files].slice(0,max);const ids=[];toast('Загружаем фото…');
-      for(const f of files){try{const b=await shrink(f);const r=await C.assets.upload(b,{type:'image/jpeg'});ids.push(r.id)}catch(e){console.error(e);toast('Фото не загрузилось','err')}}
+      for(const f of files){try{const b=await shrink(f);const r=await C.assets.upload(b,{type:'image/jpeg'});BLOBS[r.id]=b;ids.push(r.id)}catch(e){console.error(e);toast('Фото не загрузилось','err')}}
       res(ids)};inp.click()})}
 async function shrink(file,max=1400){const bmp=await createImageBitmap(file);const k=Math.min(1,max/Math.max(bmp.width,bmp.height));
   const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);

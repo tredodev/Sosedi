@@ -12,7 +12,7 @@ function osiHTML(){if(!ZID||!zk())return `<div class="gate"><h2 class="h2">Не�
   if(!isOsi())return `<div class="gate"><h2 class="h2">Кабинет только для председателя ОСИ</h2><p class="sub mt2">Роль председателя назначает модератор Тредо.</p></div>`;
   const z=zk();const openReq=D.osireq.filter(r=>!['closed'].includes(r.status));const awaitingFees=D.orders.filter(o=>['fee','crowd'].includes(o.type)&&o.status==='awaiting');
   const nav=[['overview','Обзор'],['requests','Заявки',openReq.filter(r=>r.status==='new'||r.status==='reopened').length],['outages','Отключения'],['news','Объявления'],['ballots','Голосования'],['fees','Взносы',awaitingFees.length],
-    ['codes','Коды подъездов'],['zones','Общие зоны'],['season','Сезон и покупки'],['crowd','Сборы'],['passes','Пропуска'],['members','Жители'],['showcase','Витрина ЖК'],['settings','Настройки ОСИ']];
+    ['codes','Коды подъездов'],['zones','Общие зоны'],['season','Сезон и покупки'],['crowd','Сборы'],['passes','Пропуска'],['directory','Справочник дома'],['members','Жители'],['showcase','Витрина ЖК'],['settings','Настройки ОСИ']];
   const fn=OS[OSEC]||OS.overview;let body='';try{body=fn()}catch(e){console.error(e);body='<div class="err-box">Раздел не открылся</div>'}
   return ADMSHELL('ОСИ '+esc(z.name),'Кабинет председателя',nav,OSEC,body,'osec')+toastsHTML()}
 const toastsHTML=()=>D.toasts.length?`<div style="position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:60;display:grid;gap:8px;width:min(420px,90vw)">${D.toasts.map(t=>`<div class="toast" ${t.kind==='err'?'style="background:var(--danger)"':''}>${esc(t.text)}</div>`).join('')}</div>`:'';

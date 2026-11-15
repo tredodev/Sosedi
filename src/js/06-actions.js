@@ -29,7 +29,7 @@ A.sharewait=el=>share(`Соседи, для нашего ЖК «${el.dataset.nam
 A.sharezk=()=>share(`Соседи, ЖК «${zk()?.name}» подключается к приложению Соседи: отключения, барахолка, мастера. Присоединяйтесь:`,appUrl('app'));
 A.saveaddr=async()=>{const name=fv('name');const apt=fv('apt');const ent=Number(F.ent||1);const hs=zk()?.houses||[];const house=fv('house')||(hs.length===1?hs[0]:'');
   if(!name||!apt||!house){toast(!house?'Укажите номер дома':'Заполните имя и квартиру');return}
-  const area=num('area');const ok=await W(()=>zdoc('members',C.uid).set({name,house,entrance:ent,apt,area:area||null,verified:false,role:'resident',plates:[],platesShow:[],notifyCar:true,joinedAt:now()}));
+  const area=num('area');const ok=await W(()=>zdoc('members',C.uid).set({name,house,floor:num('floor'),entrance:ent,apt,area:area||null,verified:false,role:'resident',plates:[],platesShow:[],notifyCar:true,joinedAt:now()}));
   if(ok){await until(()=>me());go('ob-verify',{},{root:1})}};
 A.verify=async()=>{const code=fv('code').replace(/\D/g,'');const m=me();const z=zk();if(code.length<4){F.err='Введите код из подъезда';R();return}
   if(F.lockUntil&&F.lockUntil>now()){F.err='Подождите минуту и попробуйте снова';R();return}
@@ -186,7 +186,7 @@ A.move=async()=>{const to=F.to;const m=me();if(!to)return;if(!confirm('Пере�
   const ok=await W(async()=>{await C.db.doc(`zk/${to}/members/${C.uid}`).set({name:m.name,house:'',entrance:1,apt:'',verified:false,role:'resident',plates:m.plates||[],platesShow:m.platesShow||[],notifyCar:m.notifyCar!==false,joinedAt:now(),movedFrom:ZID});await zdoc('members',C.uid).delete()});
   if(ok){await setPref({zk:to});subZk(to);await until(()=>D.loaded.members);go('ob-addr',{},{root:1});toast('Укажите адрес в новом ЖК')}};
 A.savesettings=async()=>{const m=me();const ent=Number(F.ent||m.entrance);const apt=fv('apt');const house=fv('house')||m.house||'';const moved=ent!==m.entrance||apt!==String(m.apt)||house!==String(m.house||'');
-  const body={name:fv('name')||m.name,house,entrance:ent,apt,area:num('area'),notifyCar:!!F.notify,helper:{on:!!F.helper,age:Number(F.age)||null,consent:!!F.consent}};if(moved){body.verified=false}
+  const body={name:fv('name')||m.name,house,floor:num('floor'),entrance:ent,apt,area:num('area'),notifyCar:!!F.notify,helper:{on:!!F.helper,age:Number(F.age)||null,consent:!!F.consent}};if(moved){body.verified=false}
   const ok=await W(()=>zdoc('members',C.uid).update(body),'Сохранено');if(ok&&moved)go('ob-verify',{},{root:1})};
 A.leavezk2=async()=>{if(!confirm('Выйти из ЖК? Профиль соседа будет удалён, публикации останутся.'))return;await W(()=>zdoc('members',C.uid).delete());await setPref({zk:null});subZk(null);go('ob-zk',{},{root:1})};
 

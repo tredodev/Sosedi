@@ -63,7 +63,7 @@ S['ob-addr']=()=>{const z=zk();const ents=Array.from({length:z?.entrances||1},(_
   ${LB('Как вас называть')}${FIN('name','Имя',{max:40})}
   ${LB('Номер дома')}${hs.length?PICK('house',hs.map(h=>[h,'Дом '+h]),{def:hs.length===1?hs[0]:''}):FIN('house','Например, 130 или 2А',{max:10})}
   <div class="two"><div>${LB('Подъезд')}${FSEL('ent',ents,{v:1})}</div><div>${LB('Квартира')}${FIN('apt','34',{max:6,mode:'numeric'})}</div></div>
-  ${LB('Площадь, м² (для голосований ОСИ)')}${FIN('area','Необязательно',{mode:'decimal',max:6})}`,
+  ${LB('Этаж')}${FIN('floor','5',{mode:'numeric',max:3})}${LB('Площадь, м² (для голосований ОСИ)')}${FIN('area','Необязательно',{mode:'decimal',max:6})}`,
   foot:BTN('Продолжить','p',ACT('saveaddr'))})};
 
 /* ---------- Вход: подтверждение ---------- */
@@ -111,7 +111,7 @@ S['outage']=p=>{const o=D.outages.find(x=>x.id===p.id);if(!o)return SCRN({nav:NA
   ${started?`<div class="card mt3"><div class="b s">После ${hm(o.end)} всё ещё нет?</div><p class="xs mut">Отметьте, и ОСИ увидит, сколько квартир без воды. Уже отметили: ${rep}.</p><div class="mt">${BTN(mine?'Вы отметили, отменить':'Не дали, сообщить в ОСИ','o sm',ACT('outrep',{id:o.id}))}</div></div>`:''}`})};
 
 /* ---------- Главная ---------- */
-function unreadTotal(){const rd=D.profile?.read||{};return myChats().reduce((s,c)=>s+c.unread,0)}
+function unreadTotal(){if(typeof ntf==='function'&&ntf().chat==='off')return 0;const rd=D.profile?.read||{};return myChats().reduce((s,c)=>s+c.unread,0)}
 function notifs(){const m=me();if(!m)return[];const out=[];const seen=D.profile?.nseen||0;
   D.outages.filter(o=>outageActive(o)&&affects(o,m)&&o.start-now()<172800000).forEach(o=>out.push({at:o.at||o.start,ic:'dropoff',c:'wa',t:`<b>${esc(o.title)}</b> ${outageWhen(o)}`,s:'ОСИ',go:['outage',o.id]}));
   D.alerts.filter(a=>a.to===C.uid&&now()-a.at<7200000).forEach(a=>out.push({at:a.at,ic:'car',c:'wa',t:`<b>Ваша машина ${esc(a.plate)} мешает:</b> ${esc(a.reason)}`,s:a.status==='free'?'Закрыто':'Ответьте соседу',go:['car-in',a.id]}));
@@ -128,7 +128,7 @@ function notifs(){const m=me();if(!m)return[];const out=[];const seen=D.profile?
 const HOMEHDR2=()=>{const un=notifs().some(n=>n.un);return `<div class="hdr"><span class="flex" style="gap:10px">${LOGO(30)}<span style="font-size:15px;font-weight:500">ЖК «${esc(zk()?.name)}»</span></span><span class="flex" style="gap:2px"><button class="nb" ${GO('saved')} aria-label="Избранное">${I('bookmark',22,1.7)}</button><button class="nb" ${GO('notifs')} aria-label="Уведомления">${I('bell',22,1.7)}${un?'<i class="dotr"></i>':''}</button></span></div>`};
 
 const SERVICES=[['car','Кто перекрыл','car-search'],['wrench','Мастера','masters'],['bag','Барахолка','flea'],['chart','Опросы','polls'],
-  ['building','Заявка в ОСИ','osi-new'],['card','Взносы ОСИ','fee'],['flag','Голосования','ballots'],['calendar','Общие зоны','zones'],
+  ['drop','Меня затапливает','flood'],['phone','Справочник дома','directory'],['building','Заявка в ОСИ','osi-new'],['card','Взносы ОСИ','fee'],['flag','Голосования','ballots'],['calendar','Общие зоны','zones'],
   ['userplus','Помощь соседей','help'],['cake','Бизнес соседей','biz-list'],['refresh','Вместе дешевле','groupbuys'],['tree','Сбор на двор','crowd-list'],
   ['star','Сезон и лига','season'],['park','Парковка','parking'],['box','Лавка в доме','shop'],['lock','Доступ и гости','access'],
   ['home','Квартира','passport'],['doc','Ремонт под ключ','leads'],['gift','Неделя в ЖК','digest'],['share','Витрина ЖК','showcase']];
@@ -143,7 +143,7 @@ S['home']=()=>{const m=me();const o=nextOutage();const inc=D.alerts.find(a=>a.to
   ${!m.verified?`<button class="banner" ${GO('ob-verify')} style="background:var(--primary-soft);margin-bottom:8px">${I('qr',20)}<span class="grow"><b class="s" style="display:block">Подтвердите адрес</b><span class="xs mut">Без этого можно только читать ленту</span></span>${I('fwd',18)}</button>`:''}
   ${inc?`<button class="banner" ${GO('car-in',{id:inc.id})} style="background:var(--danger-soft);margin-bottom:8px;color:var(--danger)">${I('car',20)}<span class="grow"><b class="s" style="display:block">Ваша машина ${esc(inc.plate)} мешает соседу</b><span class="xs">${esc(inc.reason)}, ${rel(inc.at)}</span></span>${I('fwd',18)}</button>`:''}
   ${myJoin?`<button class="banner" ${GO('joined',{id:myJoin.id})} style="background:var(--primary-soft);margin-bottom:8px">${I('userplus',20)}<span class="grow"><b class="s" style="display:block">${esc(nameOf(myJoin.usedBy))} теперь в приложении по вашей ссылке</b><span class="xs mut">+1 бесплатное поднятие</span></span>${I('fwd',18)}</button>`:''}
-  ${o?`<button class="banner" ${GO('outage',{id:o.id})}>${I('dropoff',20)}<span class="grow"><span class="b s" style="display:block">${esc(o.title)}</span><span class="xs w">${outageWhen(o)}</span></span>${I('fwd',18)}</button>`:''}
+  ${homeExtras()}${o?`<button class="banner" ${GO('outage',{id:o.id})}>${I('dropoff',20)}<span class="grow"><span class="b s" style="display:block">${esc(o.title)}</span><span class="xs w">${outageWhen(o)}</span></span>${I('fwd',18)}</button>`:''}
   ${unacked.length?`<div class="stories">${unacked.map(n=>`<button class="story" ${GO('story',{id:n.id})}><span class="ring"><span style="background:var(--deep);color:var(--on-deep)"><b class="xs">ОСИ</b></span></span><span style="max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.title)}</span></button>`).join('')}</div>`:''}
   <div class="quick">${SERVICES.slice(0,4).map(([ic,l,r])=>`<button ${GO(r)}>${TL(ic,'m',46)}<span>${l}</span></button>`).join('')}</div>
   <div class="mt">${SEGF('feed',[['feed','Лента ЖК'],['flea','Барахолка']],{def:'feed',c:'ac'})}</div></div>
@@ -182,7 +182,7 @@ S['post']=p=>{const x=D.posts.find(q=>q.id===p.id);if(!x||x.status==='deleted')r
   ${x.kind==='poll'?`<div class="mt2">${pollBlock(x)}</div>`:`<h1 class="h2 mt2">${esc(x.title)}</h1>${flea?`<div class="mt2" style="font-size:18px">${priceOf(x)}</div>`:''}${x.text?`<p class="mut mt" style="line-height:1.6;white-space:pre-line">${esc(x.text)}</p>`:''}`}
   ${x.pickup?.length?`<div class="badges mt">${x.pickup.map(t=>BD(esc(t),'m')).join('')}</div>`:''}
   ${x.kind==='poll'&&(mine||isOsi())&&!x.forwarded?`<div class="mt">${BTN('Передать итоги в ОСИ','o sm',ACT('forward',{id:x.id}))}</div>`:x.forwarded?`<p class="xs g b mt">Итоги переданы в ОСИ</p>`:''}
-  ${mine?authorPanel(x):''}
+  ${claimBlock(x)}${mine?authorPanel(x):''}
   ${LB(x.kind==='giveaway'?'Кто хочет забрать':x.kind==='question'?'Ответы соседей':'Комментарии')}
   ${cs.length?cs.map(c=>`<div class="flex top-a" style="margin-bottom:12px">${AVM(c.by,32)}<div class="grow"><div class="flex between"><b class="s">${esc(whoOf(c.by))}</b><span class="xs mut3">${rel(c.at)}</span></div><p class="s mt2" style="margin-top:2px;white-space:pre-line">${esc(c.text)}</p></div></div>`).join(''):`<p class="s mut">Пока никто не ответил.</p>`}
   ${!mine?`<div class="flex mt3" style="gap:14px"><button class="link xs" ${ACT('report',{id:x.id})} style="color:var(--text-2)">${(x.reports||[]).includes(C.uid)?'Жалоба отправлена':'Пожаловаться'}</button></div>`:''}`,
@@ -213,6 +213,7 @@ S['create']=()=>SCRN({nav:LTH('Добавьте объявление','Что х
 S['post-new']=p=>{const k=p.v||'giveaway';const flea=FLEA.includes(k);if(F.opts===undefined&&k==='poll')F.opts=['',''];
   return SCRN({nav:NAVB(KINDS[k][0],{x:k==='poll'}),body:`
   ${k!=='poll'&&k!=='question'?`<div class="thumbs">${(F.photos||[]).map((id,i)=>`<div class="thumb" style="background-image:url('${blob(id)}')"><button ${ACT('rmphoto',{v:i})} aria-label="Убрать фото">${I('close',12)}</button></div>`).join('')}${(F.photos||[]).length<6?`<button class="addph" ${ACT('addphotos')} aria-label="Добавить фото">${I(C.assets?'plus':'camera',22)}</button>`:''}</div>${!C.assets?`<p class="xs mut mt2">Фото могут добавлять участники с правом записи в артефакт.</p>`:''}`:''}
+  ${aiFillBtn(k)}
   ${k==='lost'?`<div class="mt">${SEGF('lf',[['lost','Потерял'],['found','Нашёл']],{def:'lost'})}</div>`:''}
   ${LB(k==='poll'?'Вопрос':k==='question'?'Ваш вопрос':k==='giveaway'?'Что отдаёте':k==='sell'?'Что продаёте':k==='rent'?'Что сдаёте':k==='wanted'?'Что ищете':'Что случилось')}${FIN('title',k==='poll'?'Ставим лавочки у второго подъезда?':k==='question'?'Кто знает хорошего электрика?':'Детская коляска 2 в 1',{max:90})}
   ${k==='poll'?`${LB('Варианты')}${F.opts.map((o,i)=>`<div class="flex mt2"><input class="inp" data-f="opt${i}" value="${esc(F['opt'+i]??o)}" placeholder="Вариант ${i+1}" maxlength="60">${F.opts.length>2?`<button class="nb" ${ACT('rmopt',{v:i})} aria-label="Убрать">${I('close',18)}</button>`:''}</div>`).join('')}
@@ -262,5 +263,5 @@ S['my-posts']=()=>{const ps=sortAt(D.posts.filter(p=>p.author===C.uid&&p.status!
 
 /* ---------- Уведомления ---------- */
 S['notifs']=()=>{const ns=notifs();postDraw.push(()=>{const top=ns[0]?.at||0;if(top>(D.profile?.nseen||0))setPref({nseen:top})});
-  return SCRN({nav:NAVB('Уведомления'),bcls:'flush',body:ns.length?ns.slice(0,60).map(n=>`<button class="ni${n.un?' un':''}" ${n.go?GO(n.go[0],{id:n.go[1]}):''}>${TL(n.ic,n.c,34)}<span><span class="s" style="display:block">${n.t}</span><span class="xs mut3">${n.s?n.s+', ':''}${rel(n.at)}</span></span>${n.un?'<span class="dt"></span>':'<span></span>'}</button>`).join(''):EMPTY('bell','Пока тихо','Здесь появятся отключения, ответы соседей и статусы заявок.')})};
+  return SCRN({nav:NAVB('Уведомления',{r:`<button class="nb" ${GO('notif-settings')} aria-label="Настройки уведомлений">${I('gear',20)}</button>`}),bcls:'flush',body:ns.length?ns.slice(0,60).map(n=>`<button class="ni${n.un?' un':''}" ${n.go?GO(n.go[0],{id:n.go[1]}):''}>${TL(n.ic,n.c,34)}<span><span class="s" style="display:block">${n.t}</span><span class="xs mut3">${n.s?n.s+', ':''}${rel(n.at)}</span></span>${n.un?'<span class="dt"></span>':'<span></span>'}</button>`).join(''):EMPTY('bell','Пока тихо','Здесь появятся отключения, ответы соседей и статусы заявок.')})};
 
