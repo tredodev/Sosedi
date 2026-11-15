@@ -6,12 +6,12 @@
    ===================================================================== */
 
 /* ---------- Настройки уведомлений и тихие часы ---------- */
-const NTF_DEF={outages:true,car:true,flood:true,answers:true,osi:true,jobs:true,flea:'free',chat:'all',quiet:false,qFrom:'22:00',qTo:'08:00'};
+const NTF_DEF={outages:true,car:true,flood:true,answers:true,osi:true,jobs:true,gate:true,carhelp:true,orders:true,flea:'free',chat:'all',quiet:false,qFrom:'22:00',qTo:'08:00'};
 const ntf=()=>({...NTF_DEF,...(D.profile?.ntf||{})});
 const hmToMin=s=>{const [h,m]=String(s||'0:0').split(':').map(Number);return (h||0)*60+(m||0)};
 function inQuiet(t=now()){const n=ntf();if(!n.quiet)return false;const d=new Date(t);const x=d.getHours()*60+d.getMinutes();const a=hmToMin(n.qFrom),b=hmToMin(n.qTo);return a<=b?(x>=a&&x<b):(x>=a||x<b)}
 const TOPIC={dropoff:'outages',car:'car',drop:'flood',chat:'answers',flag:'osi',building:'osi',wrench:'jobs',check:'osi',userplus:'answers',bag:'flea',gift:'flea'};
-const URGENT=new Set(['car','flood']);
+const URGENT=new Set(['car','flood','gate','carhelp']);
 const _notifsBase=notifs;
 notifs=function(){const m=me();if(!m)return[];const n=ntf();const seen=D.profile?.nseen||0;const out=_notifsBase().map(x=>({...x}));
   (D.floods||[]).filter(f=>(f.to||[]).includes(C.uid)&&now()-f.at<86400000).forEach(f=>out.push({at:f.at,ic:'drop',c:'wa',t:`<b>Соседа снизу затапливает.</b> Кв. ${esc(f.apt)}, ${esc(f.floor)} этаж: проверьте у себя`,s:FLST[f.replies?.[C.uid]?.s]||'Ответьте соседу',go:['flood-in',f.id],topic:'flood'}));
@@ -23,7 +23,8 @@ notifs=function(){const m=me();if(!m)return[];const n=ntf();const seen=D.profile
 S['notif-settings']=()=>{const n=ntf();const T=(k,l,sub,lock)=>`<div class="sel-row"><span><span style="display:block">${l}</span>${sub?`<span class="xs mut">${sub}</span>`:''}</span>${lock?'<span class="xs mut">всегда</span>':CHK(n[k],ACT('ntf',{k}))}</div>`;
   return SCRN({nav:NAVB('Уведомления'),body:`<p class="sub">Выберите, о чём сообщать. Срочное приходит всегда, остальное можно приглушить.</p>
   ${LB('Срочное')}${T('car','«Кто перекрыл авто»','Ваша машина мешает или сосед ответил',1)}${T('flood','Протечки','Соседа снизу затапливает или сосед сверху ответил',1)}${T('outages','Отключения воды и света','За день и в день отключения')}
-  ${LB('Дом и соседи')}${T('answers','Ответы на мои вопросы и объявления','')}${T('osi','Объявления и заявки ОСИ','')}${T('jobs','Заявки мастерам','')}
+  ${T('carhelp','Просьбы о помощи с машиной','Если вы отметили «Помогаю с машиной»')}${T('gate','Курьеры и гости','Курьер прошёл, охрана спрашивает, пропустить ли')}
+  ${LB('Дом и соседи')}${T('orders','Заказы на подъезд','Доставлено или курьер не застал')}${T('answers','Ответы на мои вопросы и объявления','')}${T('osi','Объявления и заявки ОСИ','')}${T('jobs','Заявки мастерам','')}
   ${LB('Барахолка')}${SEGF('flea',[['all','Всё новое'],['free','Только даром'],['off','Не сообщать']],{def:n.flea})}<p class="xs mut mt2">Ответы на ваши объявления и бронь вещи за вами приходят всегда.</p>
   ${LB('Чат подъезда')}${SEGF('chat',[['all','Каждое сообщение'],['off','Без значка']],{def:n.chat})}
   ${LB('Тихие часы')}<div class="sel-row"><span><span style="display:block">Не беспокоить</span><span class="xs mut">Срочное про машину и протечки придёт и ночью</span></span>${CHK(n.quiet,ACT('ntf',{k:'quiet'}))}</div>

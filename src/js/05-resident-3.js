@@ -183,7 +183,7 @@ S['moving']=()=>{const others=D.zks.filter(z=>z.id!==ZID&&z.status==='active');c
 
 /* ---------- Аккаунт ---------- */
 function trust(){const m=me();const inv=D.invites.filter(i=>i.from===C.uid&&i.usedBy).length;const ans=D.comments.filter(c=>c.by===C.uid&&D.posts.find(p=>p.id===c.post&&p.kind==='question'&&p.author!==C.uid)).length;
-  const gave=D.posts.filter(p=>p.author===C.uid&&p.kind==='giveaway'&&p.status==='given').length;const helped=D.tasks.filter(t=>t.taker===C.uid&&(t.status==='done'||t.status==='paid')).length;
+  const gave=D.posts.filter(p=>p.author===C.uid&&p.kind==='giveaway'&&p.status==='given').length;const helped=D.tasks.filter(t=>t.taker===C.uid&&(t.status==='done'||t.status==='paid')).length+(D.carhelp||[]).filter(h=>h.goer===C.uid&&h.status==='done').length;
   const steps=[['Адрес подтверждён',!!m.verified],['Номер авто добавлен',(m.plates||[]).length>0],['Позвали соседа',inv>0],['Ответили на 3 вопроса соседей',ans>=3,ans+'/3'],['Помогли соседу или отдали вещь',helped+gave>0]];
   const lvl=steps.filter(s=>s[1]).length;return{steps,lvl,inv,ans,gave,helped}}
 const LVLN=['Новичок','Сосед','Надёжный сосед','Активный сосед','Опора подъезда','Душа дома'];

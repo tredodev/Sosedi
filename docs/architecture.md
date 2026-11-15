@@ -28,7 +28,7 @@
 
 | Путь | Что хранит | Кто пишет |
 | --- | --- | --- |
-| `zk/{zkId}` | ЖК: `cityId`, `city`, `name`, `address`, `developer`, `houses[]`, `entrances`, `aptsPerEntrance`, `threshold`, `status` (`active`, `waitlist`, `catalog`), `codes{ключ: {hash, at}}`, `zones[]`, `payInfo`, `totalArea`, `leaguePrize`, `warranty` | модератор, председатель ОСИ |
+| `zk/{zkId}` | ЖК: `guardOn`, `staff{отпечаток кода: {role, sup}}`, `directory[]`, `cityId`, `city`, `name`, `address`, `developer`, `houses[]`, `entrances`, `aptsPerEntrance`, `threshold`, `status` (`active`, `waitlist`, `catalog`), `codes{ключ: {hash, at}}`, `zones[]`, `payInfo`, `totalArea`, `leaguePrize`, `warranty` | модератор, председатель ОСИ |
 | `waitlist/{uid}_{ключ}` | заявка в лист ожидания: `zkId` или свободное `name`, `cityId`, `city`, `street`, `ent`, `apt` | житель |
 | `platform/settings` | тарифы поднятий, реквизиты Тредо, сборы, партнёр недели, настройки лавки | только модератор |
 | `public/zk-{zkId}` | витрина ЖК: оценки, решённые заявки, цитата | председатель ОСИ; читать может любой |
@@ -43,7 +43,7 @@
 
 | Коллекция | Основные поля |
 | --- | --- |
-| `members/{uid}` | `name`, `house`, `entrance`, `floor`, `apt`, `area`, `verified`, `via` (`code`, `invite`, `osi`, `admin`), `role` (`resident`, `osi`), `plates[]` (нормализованные), `platesShow[]`, `notifyCar`, `helper{on, age, consent}`, `banned` |
+| `members/{uid}` | `name`, `house`, `entrance`, `floor`, `apt`, `carHelper{on, cables, rope, compressor, shovel}`, `supplier`, `area`, `verified`, `via` (`code`, `invite`, `osi`, `admin`), `role` (`resident`, `osi`, `guard`, `supplier`), `plates[]` (нормализованные), `platesShow[]`, `notifyCar`, `helper{on, age, consent}`, `banned` |
 | `posts` | `kind` (`giveaway`, `sell`, `wanted`, `rent`, `question`, `lost`, `poll`, `car`), `title`, `text`, `photos[]`, `price`, `oldPrice`, `pickup[]`, `scope` (`all`, `entrance`), `entrance`, `author`, `status` (`active`, `given`, `hidden`, `deleted`), `bumpUntil`, `bumpFree`, `poll{options[], endsAt}`, `reports[]`, `forwarded` |
 | `comments` | `post`, `by`, `text` |
 | `msgs` | `chat` (`all`, `e<подъезд>`, `dm_<uid>_<uid>`), `from`, `text` |
@@ -60,6 +60,10 @@
 | `tasks` | помощь соседей: `kind`, `when`, `reward`, `by`, `taker`, `status`, `photo`, `repeat` |
 | `floods` | «Меня затапливает»: `from`, `apt`, `floor`, `entrance`, `house`, `where`, `room`, `to[]` (соседи этажом выше), `replies{uid: {s, at}}`, `status` |
 | `claims` | очередь «Хочу забрать»: `post`, `by`, `status` (`active`, `cancelled`, `noshow`, `taken`). Бронь 2 часа вычисляется по времени, без фоновых задач |
+| `carhelp` | «Помогите с машиной»: `by`, `type`, `place`, `plate`, `goer`, `status` (`open`, `done`, `cancelled`) |
+| `spots` | места во дворе: `kind` (`leaving` живёт 15 минут, `temp` до `until`), `place`, `plate` |
+| `gatereq` | вопрос охраны жителю «пропустить?»: `apt`, `svc`, `to[]`, `status` (`pending`, `yes`, `no`, `nobody`) |
+| `suppliers`, `coop` | поставщик (каталог, день доставки, дедлайн, окно) и заказы жителей, id заказа = `<поставщик>_<дата доставки>_<uid>` |
 | `biz`, `parking`, `leads`, `offers`, `shop`, `passes`, `invites` | бизнес соседей, аренда мест, лиды на ремонт и предложения подрядчиков, лавка, гостевые пропуска, приглашения |
 
 ## Подтверждение адреса

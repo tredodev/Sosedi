@@ -43,9 +43,9 @@ const C={db:null,user:null,assets:null,dl:null,sample:null,uid:null,admin:false,
 const D={zks:[],waitlist:[],settings:{},me:null,profile:null,loaded:{},err:null,toasts:[],
   members:[],posts:[],comments:[],outages:[],masters:[],reviews:[],jobs:[],alerts:[],osireq:[],news:[],ballots:[],bookings:[],
   groupbuys:[],tasks:[],biz:[],parking:[],crowd:[],leads:[],offers:[],orders:[],fees:[],invites:[],shop:[],passes:[],events:[],msgs:[],
-  votes:[],ovotes:[],acks:[],floods:[],claims:[]};
+  votes:[],ovotes:[],acks:[],floods:[],claims:[],carhelp:[],spots:[],gatereq:[],suppliers:[],coop:[]};
 const BLOBS={}; // фото, выбранные в этой сессии: для заполнения объявления по фото
-const ZK_COLS=['members','posts','comments','outages','masters','reviews','jobs','alerts','osireq','news','ballots','bookings','groupbuys','tasks','biz','parking','crowd','leads','offers','orders','fees','invites','shop','passes','events','floods','claims'];
+const ZK_COLS=['members','posts','comments','outages','masters','reviews','jobs','alerts','osireq','news','ballots','bookings','groupbuys','tasks','biz','parking','crowd','leads','offers','orders','fees','invites','shop','passes','events','floods','claims','carhelp','spots','gatereq','suppliers','coop'];
 const SUBS={};
 let ZID=null;
 const Z=()=>ZID;

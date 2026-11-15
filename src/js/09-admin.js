@@ -4,11 +4,12 @@
 let ASEC='overview';
 A.asec=el=>{ASEC=el.dataset.v;F={};R();scrollTo(0,0)};
 const AD={};
+AD.suppliers=()=>supAdminSection();
 function adminHTML(){if(!C.admin)return `<div class="gate"><h2 class="h2">Раздел для модераторов Тредо</h2><p class="sub mt2">Доступ есть у владельца и редакторов этого приложения.</p></div>`;
   const rep=D.posts.filter(p=>(p.reports||[]).length&&p.status!=='hidden');const pm=D.masters.filter(m=>m.status==='pending');const pb=D.biz.filter(b=>b.status==='pending');
   const aw=D.orders.filter(o=>['bump','shop'].includes(o.type)&&o.status==='awaiting');const ol=D.leads.filter(l=>l.status==='open');
   const nav=[['overview','Обзор'],['zks','ЖК и роли'],['waitlist','Лист ожидания',groupWait().length],['moder','Жалобы',rep.length],['members','Жители'],['masters','Мастера',pm.length],['jobs','Заявки мастерам'],['biz','Бизнес соседей',pb.length],
-    ['orders','Оплаты Тредо',aw.length],['leads','Ремонт: лиды',ol.length],['shop','Лавка'],['settings','Тарифы и партнёр'],['data','Данные']];
+    ['orders','Оплаты Тредо',aw.length],['suppliers','Поставщики'],['leads','Ремонт: лиды',ol.length],['shop','Лавка'],['settings','Тарифы и партнёр'],['data','Данные']];
   const fn=AD[ASEC]||AD.overview;let body='';try{body=fn()}catch(e){console.error(e);body='<div class="err-box">Раздел не открылся</div>'}
   return ADMSHELL('Тредо','Модерация платформы',nav,ASEC,`<div class="flex between" style="margin-bottom:6px"><span class="xs mut">Текущий ЖК: <b>${esc(zk()?.name||'не выбран')}</b></span>${D.zks.length>1?`<select class="inp" style="width:auto;min-height:36px;padding:6px 36px 6px 12px;font-size:13px" data-f="_zk" data-act-change="adminzk">${D.zks.map(z=>`<option value="${esc(z.id)}" ${z.id===ZID?'selected':''}>${esc(z.name)}</option>`).join('')}</select>`:''}</div>`+body,'asec')+toastsHTML()}
 const groupWait=()=>{const g={};D.waitlist.forEach(w=>{const k=w.zkId||w.key;(g[k]=g[k]||{key:k,zkId:w.zkId||null,name:w.name,city:w.city,cityId:w.cityId||null,street:w.street||'',n:0,last:0}).n++;g[k].last=Math.max(g[k].last,w.at||0)});return Object.values(g).sort((a,b)=>b.n-a.n)};

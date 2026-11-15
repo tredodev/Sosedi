@@ -15,7 +15,7 @@ S['car-search']=()=>SCRN({nav:NAVB(),body:`
 const CARST={sent:'Отправлено',read:'Прочитано',coming:'Идёт',free:'Выезд свободен'};
 const findOwner=pl=>D.members.find(m=>(m.plates||[]).includes(pl)&&m.notifyCar!==false);
 S['car-new']=p=>{const o=mem(p.id);return SCRN({nav:NAVB(`<span class="flex" style="gap:8px">${PS(esc(p.v))}<span class="xs g b flex" style="gap:3px">${I('check',14,2.4)}Владелец найден</span></span>`,{l:1}),body:`
-  <h1 class="h1">Сосед: ${esc(addrOf(o))}</h1><p class="sub">${o?.id===C.uid?'Это ваша машина.':'Ему придёт сообщение в приложении'}</p>
+  ${tempSpotInfo(p.v)}<h1 class="h1">Сосед: ${esc(addrOf(o))}</h1><p class="sub">${o?.id===C.uid?'Это ваша машина.':'Ему придёт сообщение в приложении'}</p>
   ${LB('Что случилось')}${PICK('reason',REASONS.map(r=>[r,r]),{def:REASONS[0]})}
   ${LB('Добавить пару слов')}${FIN('text','Например: стою у шлагбаума',{max:120})}`,
   foot:BTN('Отправить соседу','p',ACT('sendalert',{to:p.id,plate:p.v}))})};
@@ -39,7 +39,7 @@ S['car-in']=p=>{const a=D.alerts.find(x=>x.id===p.id);if(!a)return SCRN({nav:NAV
   ${a.status!=='free'?`${LB('Быстрый ответ')}<div class="chips">${['Извините! Выхожу, буду через 2 минуты','Уже иду','Это не моя машина'].map(t=>`<button class="chip${a.reply===t?' on':''}" ${ACT('carreply',{id:a.id,v:t})}>${t}</button>`).join('')}</div>`:`<p class="s g b mt">Выезд свободен, спасибо.</p>${a.thanks?`<p class="s mt2">Сосед ответил: «${esc(a.thanks)}»</p>`:''}`}`,
   foot:a.status!=='free'?BTN('Я отодвинул машину','p',ACT('carfree',{id:a.id})):BTN('Готово','p',ACT('tab',{v:'home'}))})};
 S['car-unknown']=p=>SCRN({nav:NAVB(),body:`${PS(esc(p.v))}
-  <h1 class="h1 mt">Этого номера пока нет у соседей</h1><p class="sub">Может, это гость или сосед ещё не в приложении. Вот что можно сделать сейчас.</p>
+  ${tempSpotInfo(p.v)}<h1 class="h1 mt">Этого номера пока нет у соседей</h1><p class="sub">Может, это гость или сосед ещё не в приложении. Вот что можно сделать сейчас.</p>
   <button class="opt" ${ACT('askcar',{v:p.v})}><span class="tile m" style="width:34px;height:34px">${I('chat',17)}</span><span class="grow"><span class="b s" style="display:block">Спросить в ленте ЖК</span><span class="xs mut">Опубликуем номер с просьбой отодвинуть</span></span></button>
   <button class="opt on" ${GO('car-note',{v:p.v})}><span class="tile wa" style="width:34px;height:34px">${I('share',17)}</span><span class="grow"><span class="b s" style="display:block">Записка с QR на лобовое стекло</span><span class="xs mut">Владелец отсканирует и сразу попадёт в приложение</span></span></button>`});
 S['car-note']=p=>{if(!F.inv){F.inv='pending';postDraw.push(async()=>{const code=rid(8);const ok=await W(()=>zdoc('invites',code).set({from:C.uid,at:now(),usedBy:null,ctx:'car:'+p.v}));F.inv=ok?code:null;R()})}

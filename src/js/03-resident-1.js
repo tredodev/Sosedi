@@ -15,7 +15,7 @@ function appHTML(){
   if(!prof.zk||!z){if(!['ob-city','ob-zk','ob-wait','ob-waitdone'].includes(r)){NAVS.stack=[{r:'ob-city',p:{}}];r='ob-city'}}
   else if(z.status!=='active'){if(!['zk-closed','ob-city','ob-zk','ob-wait','ob-waitdone'].includes(r)){NAVS.stack=[{r:'zk-closed',p:{}}];r='zk-closed'}}
   else if(!D.loaded.members)return loadingScr('Загружаем ваш ЖК…',1);
-  else if(!me()){if(!['ob-addr','ob-city','ob-zk','ob-wait','ob-waitdone'].includes(r)){NAVS.stack=[{r:'ob-addr',p:{}}];r='ob-addr'}}
+  else if(!me()){if(!['ob-addr','ob-staff','ob-city','ob-zk','ob-wait','ob-waitdone'].includes(r)){NAVS.stack=[{r:'ob-addr',p:{}}];r='ob-addr'}}
   else if(me().banned){return SCRN({body:EMPTY('alert','Доступ ограничен','Модератор Тредо ограничил ваш аккаунт в этом ЖК. Напишите в поддержку, если это ошибка.')})}
   const fn=S[r]||S.home;let html='';
   try{html=fn(p)}catch(e){console.error(e);html=SCRN({nav:NAVB('Ошибка'),body:EMPTY('alert','Экран не открылся','Вернитесь назад и попробуйте ещё раз.')})}
@@ -64,7 +64,7 @@ S['ob-addr']=()=>{const z=zk();const ents=Array.from({length:z?.entrances||1},(_
   ${LB('Номер дома')}${hs.length?PICK('house',hs.map(h=>[h,'Дом '+h]),{def:hs.length===1?hs[0]:''}):FIN('house','Например, 130 или 2А',{max:10})}
   <div class="two"><div>${LB('Подъезд')}${FSEL('ent',ents,{v:1})}</div><div>${LB('Квартира')}${FIN('apt','34',{max:6,mode:'numeric'})}</div></div>
   ${LB('Этаж')}${FIN('floor','5',{mode:'numeric',max:3})}${LB('Площадь, м² (для голосований ОСИ)')}${FIN('area','Необязательно',{mode:'decimal',max:6})}`,
-  foot:BTN('Продолжить','p',ACT('saveaddr'))})};
+  foot:BTN('Продолжить','p',ACT('saveaddr'))+BTN('Служебный вход: охрана или поставщик','g',GO('ob-staff'))})};
 
 /* ---------- Вход: подтверждение ---------- */
 S['ob-verify']=()=>{const m=me();const z=zk();const tries=F.tries||0;const err=F.err;
