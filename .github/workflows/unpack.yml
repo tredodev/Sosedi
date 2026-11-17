@@ -1,0 +1,24 @@
+name: unpack
+on:
+  push:
+    paths: ['**.zip']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Распаковать архив в корень репозитория
+        run: |
+          set -e
+          ZIP=$(git ls-files '*.zip' | head -1)
+          [ -n "$ZIP" ] || { echo "Архив не найден"; exit 1; }
+          mkdir -p /tmp/u && unzip -q "$ZIP" -d /tmp/u
+          SRC=$(dirname "$(find /tmp/u -name build.mjs | head -1)")
+          git ls-files | grep -v '^\.github/' | xargs -r git rm -q
+          rsync -a --exclude='.git' --exclude='.github' "$SRC"/ ./
+          git add -A
+          git -c user.name="github-actions" -c user.email="github-actions@users.noreply.github.com" commit -m "Распакован архив $ZIP" || echo "Нет изменений"
+          git push
