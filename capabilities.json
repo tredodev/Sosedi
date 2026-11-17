@@ -1,0 +1,62 @@
+{
+  "assets": {
+    "upload": "interact"
+  },
+  "db": {
+    "rules": [
+      {
+        "path": "",
+        "read": "interact",
+        "write": "interact"
+      },
+      {
+        "path": "platform",
+        "write": "admin"
+      },
+      {
+        "path": "public",
+        "read": "view",
+        "write": "interact"
+      },
+      {
+        "path": "votes",
+        "read": "interact",
+        "write": "owner"
+      },
+      {
+        "path": "votes/{self}",
+        "read": "interact",
+        "write": "interact"
+      },
+      {
+        "path": "ovotes",
+        "read": "interact",
+        "write": "owner"
+      },
+      {
+        "path": "ovotes/{self}",
+        "read": "interact",
+        "write": "interact"
+      },
+      {
+        "path": "acks",
+        "read": "interact",
+        "write": "owner"
+      },
+      {
+        "path": "acks/{self}",
+        "read": "interact",
+        "write": "interact"
+      },
+      {
+        "path": "data/users/{self}",
+        "write": "interact"
+      }
+    ]
+  },
+  "downloads": true,
+  "sample": {
+    "images": true
+  },
+  "user": {}
+}

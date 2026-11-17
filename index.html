@@ -1,0 +1,1168 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Тредо Соседи — прототип MVP, 60 экранов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Дизайн-токены (переносятся в theme.ts / theme.dart) ===== */
+:root{
+  /* Дизайн-система Соседей 2022 (Sosedi_App.pdf): цвета сняты с макетов приложения */
+  --page:#E4EFEC;--surface:#FFFFFF;--surface-2:#F1F2F4;--surface-3:#F0F4F7;--line:#ECEEF0;--line-2:#E1E5E8;--field-active:#2EAB8F;
+  --text:#2B3036;--text-2:#98A1A6;--text-3:#C3C9CD;
+  --primary:#2EAB8F;--primary-strong:#1F8770;--on-primary:#FFFFFF;--primary-soft:#E3F4EF;--primary-soft2:#F2FAF8;
+  --accent:#FFAE14;--on-accent:#FFFFFF;
+  --warm:#B87400;--warm-soft:#FFF4DE;--warm-line:#FFD58A;--warm-line-soft:#FFE7B8;
+  --danger:#EB5545;--danger-soft:#FDEDEB;--danger-line:#F5ABA3;
+  --peach:#FFC861;--amber:#FFAE14;--mint:#A9DFD1;--av-ink:#2B3036;--peach-soft:#FFF1D6;--mint-soft:#E3F4EF;--sand:#ECEEF0;
+  --deep:#1E7F69;--deep-2:rgba(255,255,255,.14);--on-deep:#FFFFFF;--on-deep-2:rgba(255,255,255,.78);
+  --night:#1B2226;--scrim:#5F676C;--frame:#2B3036;--ink-bg:#2B3036;--ink-fg:#FFFFFF;--qr-ink:#111111;--qr-bg:#FFFFFF;
+  --r-field:10px;--r-btn:12px;--r-card:16px;--pad:20px;--shadow:0 8px 24px -10px rgba(43,48,54,.18);
+  color-scheme:light;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--page:#0E1413;--surface:#171C1F;--surface-2:#21272B;--surface-3:#1E2529;--line:#2A3135;--line-2:#363E43;--field-active:#4CC4A8;--text:#EDF1F2;--text-2:#97A1A6;--text-3:#5D676C;--primary:#3FBE9F;--primary-strong:#7DD8C1;--on-primary:#06231C;--primary-soft:#173A32;--primary-soft2:#14302A;--accent:#FFB52E;--on-accent:#2B1C00;--warm:#FFC461;--warm-soft:#3A2C12;--warm-line:#7A5A1E;--warm-line-soft:#4A3816;--danger:#F28B80;--danger-soft:#3A2321;--danger-line:#7E3D36;--peach:#E9B04E;--amber:#FFB52E;--mint:#7ACBB6;--av-ink:#171C1F;--peach-soft:#3A2C12;--mint-soft:#173A32;--sand:#2A3135;--deep:#155A4A;--deep-2:rgba(255,255,255,.1);--on-deep:#FFFFFF;--on-deep-2:rgba(255,255,255,.75);--night:#0B0F11;--scrim:#050707;--frame:#363E43;--ink-bg:#363E43;--ink-fg:#FFFFFF;--shadow:0 8px 24px -10px rgba(0,0,0,.6);color-scheme:dark;}}
+:root[data-theme="dark"]{--page:#0E1413;--surface:#171C1F;--surface-2:#21272B;--surface-3:#1E2529;--line:#2A3135;--line-2:#363E43;--field-active:#4CC4A8;--text:#EDF1F2;--text-2:#97A1A6;--text-3:#5D676C;--primary:#3FBE9F;--primary-strong:#7DD8C1;--on-primary:#06231C;--primary-soft:#173A32;--primary-soft2:#14302A;--accent:#FFB52E;--on-accent:#2B1C00;--warm:#FFC461;--warm-soft:#3A2C12;--warm-line:#7A5A1E;--warm-line-soft:#4A3816;--danger:#F28B80;--danger-soft:#3A2321;--danger-line:#7E3D36;--peach:#E9B04E;--amber:#FFB52E;--mint:#7ACBB6;--av-ink:#171C1F;--peach-soft:#3A2C12;--mint-soft:#173A32;--sand:#2A3135;--deep:#155A4A;--deep-2:rgba(255,255,255,.1);--on-deep:#FFFFFF;--on-deep-2:rgba(255,255,255,.75);--night:#0B0F11;--scrim:#050707;--frame:#363E43;--ink-bg:#363E43;--ink-fg:#FFFFFF;--shadow:0 8px 24px -10px rgba(0,0,0,.6);color-scheme:dark;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"SF Pro Text","Inter",system-ui,"Segoe UI",Roboto,sans-serif;background:var(--page);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===== Страница ===== */
+.top{max-width:1320px;margin:0 auto;padding:22px 24px 6px}
+.top h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.top p{color:var(--text-2);font-size:14px;margin-top:4px;max-width:72ch;line-height:1.5}
+.layout{display:grid;grid-template-columns:268px 1fr;gap:28px;max-width:1320px;margin:0 auto;padding:12px 24px 40px}
+.side{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;padding:0 6px 20px 0}
+.side .part{font-size:12px;color:var(--text-3);font-weight:600;margin:18px 0 2px}
+.side .part:first-child{margin-top:0}
+.side .sec{font-size:13px;font-weight:600;margin:12px 0 4px;color:var(--text)}
+.side button{display:flex;gap:8px;width:100%;text-align:left;padding:5px 8px;border-radius:8px;font-size:13px;color:var(--text-2)}
+.side button span{color:var(--text-3);font-variant-numeric:tabular-nums;min-width:20px}
+.side button:hover{background:var(--surface-2)}
+.side button.on{background:var(--primary-soft);color:var(--primary-strong);font-weight:600}
+.stage{display:flex;gap:32px;align-items:flex-start;min-width:0}
+.pick{display:none;width:100%;height:42px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);color:var(--text);font:inherit;font-size:14px;padding:0 10px;margin-bottom:12px}
+.phonewrap{flex:none;max-width:100%;overflow-x:auto}
+.phone{width:375px;height:740px;border-radius:42px;border:9px solid var(--frame);background:var(--surface);overflow:hidden;position:relative;box-shadow:0 30px 60px -30px rgba(15,40,32,.45)}
+.phone.wide{width:880px;height:580px;border-radius:16px;border-width:6px}
+.info{flex:1;min-width:240px;max-width:380px;position:sticky;top:12px}
+.info .crumb{font-size:12.5px;color:var(--text-3)}
+.info h2{font-size:21px;margin:6px 0 8px;letter-spacing:-.01em}
+.info code{font-size:12px;background:var(--surface);border:1px solid var(--line);padding:2px 7px;border-radius:6px;color:var(--text-2)}
+.info .note{font-size:14px;line-height:1.6;color:var(--text-2);margin-top:14px}
+.info .pn{display:flex;gap:8px;margin-top:20px}
+.info .pn button{border:1px solid var(--line-2);border-radius:10px;padding:9px 14px;font-size:13px;background:var(--surface)}
+.info .hint{font-size:12px;color:var(--text-3);margin-top:14px;line-height:1.5}
+@media (max-width:1140px){.stage{flex-direction:column;align-items:center}.info{max-width:560px;position:static;width:100%}}
+@media (max-width:780px){
+  .top{padding:16px 14px 4px}.layout{grid-template-columns:1fr;padding:8px 12px 32px}
+  .side{display:none}.pick{display:block}.stage{gap:18px}
+  .phone{width:min(375px,calc(100vw - 24px));height:min(760px,calc(100dvh - 150px));min-height:600px;border-width:7px;border-radius:34px}
+  .phone.wide{width:880px;height:580px}
+}
+
+/* ===== Компоненты приложения ===== */
+.scr{height:100%;display:flex;flex-direction:column;background:var(--surface);color:var(--text);font-size:15px;line-height:1.4;position:relative}
+.sb{height:34px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 24px;font-size:13px;font-weight:600}
+.sbi{display:flex;gap:2px;align-items:flex-end}
+.sbi i{width:3px;background:currentColor;border-radius:1px}
+.sbi i:nth-child(1){height:5px}.sbi i:nth-child(2){height:7px}.sbi i:nth-child(3){height:9px}
+.sbi s{width:21px;height:10px;border:1.5px solid currentColor;border-radius:3px;margin-left:6px;position:relative;opacity:.85}
+.sbi s::after{content:"";position:absolute;inset:1.5px 5px 1.5px 1.5px;background:currentColor;border-radius:1px}
+.nav{height:52px;flex:none;display:grid;grid-template-columns:40px 1fr auto;align-items:center;padding:0 14px 0 10px;gap:4px}
+.nb{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;position:relative}
+.nt{font-weight:700;font-size:17px;text-align:center;min-width:0;letter-spacing:-.01em}
+.nav.l .nt{text-align:left}
+.nr{min-width:36px;text-align:right;font-size:13px}
+.body{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px var(--pad) 20px;scrollbar-width:none}
+.body::-webkit-scrollbar{display:none}
+.body.flush{padding:0}
+.foot>*{min-width:0}
+.foot{flex:none;padding:10px var(--pad) 16px;display:grid;gap:8px;background:var(--surface)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fine{font-size:13px;color:var(--text-3);text-align:center;line-height:1.45}
+.h1{font-size:24px;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.015em;margin:4px 0 8px}
+.h1.xl{font-size:34px;letter-spacing:-.02em}
+.h2{font-size:20px;font-weight:700;line-height:1.22}
+.h3{font-size:17px;font-weight:600;line-height:1.3}
+.sub{font-size:15px;color:var(--text-2);line-height:1.4}
+.lbl{font-size:12px;font-weight:600;margin:22px 0 8px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em}
+.lbl.first{margin-top:6px}
+.mut{color:var(--text-2)}.mut3{color:var(--text-3)}.g{color:var(--primary)}.w{color:var(--warm)}.r{color:var(--danger)}
+.xs{font-size:13px}.s{font-size:15px}.b{font-weight:600}.bb{font-weight:700}
+.mt{margin-top:12px}.mt2{margin-top:8px}.mt3{margin-top:18px}.mt4{margin-top:24px}
+.flex{display:flex;align-items:center;gap:10px}.top-a{align-items:flex-start}.between{justify-content:space-between}
+.grow{flex:1;min-width:0}.center{text-align:center}.wfull{width:100%}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;line-height:1.2;border-radius:var(--r-btn);font-weight:600;font-size:16px;padding:0 14px;width:100%;text-align:center;transition:transform .08s}
+.btn:active{transform:scale(.98)}
+.btn.p{background:var(--primary);color:var(--on-primary)}
+.two .btn.o{border-color:var(--line-2);color:var(--text)}
+.sb:has(+ .lth){background:var(--primary);color:var(--on-primary)}
+.btn.o{border:1.5px solid var(--primary);color:var(--primary);background:var(--surface)}
+.btn.ac{background:var(--accent);color:var(--on-accent)}
+.btn.s2{border:1.5px solid var(--line-2);color:var(--text);background:var(--surface)}
+.btn.dis{background:var(--surface-2);color:var(--text-2)}
+.btn.g{min-height:38px;color:var(--primary);font-size:15px;font-weight:500}
+.btn.d{border:1px solid var(--danger-line);color:var(--danger)}
+.btn.wm{border:1px solid var(--warm-line);color:var(--warm);background:var(--surface)}
+.btn.lt{background:var(--on-deep);color:var(--deep)}
+.btn.gl{height:36px;color:var(--on-deep);font-size:15px}
+.btn.sm{height:auto;min-height:40px;padding:8px 14px;font-size:15px;line-height:1.25}
+.two .btn{font-size:16px;padding:0 8px;line-height:1.2}
+.btn.auto{width:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;margin:0 calc(var(--pad)*-1);padding:0 var(--pad);scrollbar-width:none}
+.chips.scroll::-webkit-scrollbar{display:none}
+.chip{border:1.5px solid var(--line-2);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:500;white-space:nowrap;background:var(--surface);flex:none}
+.chip.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary);font-weight:500}
+.chip.dash{border-style:dashed;color:var(--text-2);padding:5px 10px;font-size:11.5px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface);border:2px solid var(--primary);border-radius:14px;padding:2px;gap:2px}
+.seg.ac{border-color:var(--accent)}
+.seg button{height:40px;border-radius:11px;font-size:15px;font-weight:500;color:var(--text);text-align:center}
+.seg.ac button.on{background:var(--accent);color:var(--on-accent)}
+.seg button.on{background:var(--primary);color:var(--on-primary);font-weight:600}
+.card{border:1px solid var(--line);border-radius:var(--r-card);padding:14px 16px;background:var(--surface);width:100%}
+.card:not(.flex){display:block}
+.card.flex{display:flex}
+.card.f{background:var(--surface-2);border-color:transparent}
+.card.m{background:var(--primary-soft);border-color:transparent}
+.card.wa{background:var(--warm-soft);border-color:var(--warm-line-soft)}
+.card.sel{border:1.5px solid var(--primary)}
+.card.el{border-color:transparent;box-shadow:var(--shadow)}
+.card.dash{border-style:dashed;border-color:var(--line-2)}
+.card.dp{background:var(--deep);color:var(--on-deep);border-color:transparent}
+.card.dp .mut{color:var(--on-deep-2)}
+.tile{border-radius:12px;display:grid;place-items:center;flex:none}
+.tile.m{background:var(--primary-soft);color:var(--primary)}
+.tile.wa{background:var(--warm-soft);color:var(--warm)}
+.tile.f{background:var(--surface-2);color:var(--text-2)}
+.tile.pe{background:var(--peach-soft);color:var(--warm)}
+.av{--s:36px;width:var(--s);height:var(--s);border-radius:50%;display:grid;place-items:center;font-size:calc(var(--s)*.32);font-weight:700;flex:none;color:var(--av-ink)}
+.av.pe{background:var(--peach)}.av.mi{background:var(--mint)}.av.am{background:var(--amber)}
+.av.gr{background:var(--surface-2);color:var(--text-2)}.av.dp{background:var(--deep);color:var(--on-deep)}
+.avs{display:flex}.avs .av{box-shadow:0 0 0 2px var(--surface);margin-left:-7px}.avs .av:first-child{margin-left:0}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;background:var(--surface-2);color:var(--text)}
+.badge.m{background:var(--primary-soft);color:var(--primary-strong)}
+.badge.wa{background:var(--warm-soft);color:var(--warm)}
+.badge.dp{background:var(--deep);color:var(--on-deep)}
+.badges{display:flex;flex-wrap:wrap;gap:4px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);font-size:15px;align-items:center}
+.row>:first-child{color:var(--text-2)}.row>:last-child{text-align:right;font-weight:500}
+.row.plain>:first-child{color:var(--text)}
+.rows>.row:last-child{border-bottom:0}
+.prog{height:6px;background:var(--line);border-radius:6px;position:relative}
+.prog i{position:absolute;inset:0 auto 0 0;background:var(--primary);border-radius:6px;transition:width .3s}
+.prog b{position:absolute;top:-4px;width:2px;height:14px;background:var(--text);border-radius:2px}
+.prog.lt{background:rgba(255,255,255,.18)}.prog.lt i{background:var(--on-deep)}
+.prog.wa i{background:var(--warm)}
+.plate{display:grid;grid-template-columns:1fr 56px;border:2px solid var(--text);border-radius:9px;height:60px;overflow:hidden;background:var(--surface)}
+.plate span{display:grid;place-items:center;font-size:28px;font-weight:700;letter-spacing:.08em}
+.plate em{font-style:normal;border-left:2px solid var(--text);display:grid;place-items:center;align-content:center;font-weight:700;font-size:19px;line-height:1}
+.plate em small{font-size:9px;color:var(--text-2);margin-top:2px}
+.plate.foc{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}.plate.foc em{border-color:var(--primary)}
+.plsm{display:inline-block;border:1.5px solid var(--text);border-radius:6px;padding:3px 9px;font-weight:700;font-size:13.5px;letter-spacing:.05em;white-space:nowrap}
+.code{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.code span{height:52px;border:1.5px solid var(--line-2);border-radius:var(--r-field);display:grid;place-items:center;font-size:20px;font-weight:600;background:var(--surface)}
+.code .cur{border:1.5px solid var(--primary)}
+.code.err span{border-color:var(--danger);background:var(--danger-soft)}
+.errt{display:flex;gap:6px;color:var(--danger);font-size:14px;margin-top:8px;line-height:1.4}
+.pollo{position:relative;display:flex;justify-content:space-between;width:100%;border:1.5px solid var(--line-2);border-radius:var(--r-field);padding:11px 14px;overflow:hidden;font-size:15px;margin-top:6px}
+.pollo i{position:absolute;inset:0 auto 0 0;background:var(--primary-soft)}
+.pollo.gray i{background:var(--surface-2)}
+.pollo span,.pollo b{position:relative}
+.pollo.on{border-color:var(--primary)}
+.sect{padding:16px var(--pad);border-top:10px solid var(--surface-2)}
+.st{display:grid;grid-template-columns:22px 1fr;gap:10px;position:relative;padding-bottom:14px}
+.st::before{content:"";position:absolute;left:10px;top:22px;bottom:0;width:2px;background:var(--line)}
+.st:last-child::before{display:none}
+.st .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2);display:grid;place-items:center;background:var(--surface)}
+.st.done .dot{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.st.done::before{background:var(--primary)}
+.st.cur .dot{border:6px solid var(--text)}
+.bub{background:var(--surface-2);border-radius:14px;padding:9px 12px;font-size:15px;max-width:86%;display:inline-block;line-height:1.4}
+.bub.me{background:var(--primary);color:var(--on-primary)}
+.bub.mint{background:var(--primary-soft)}
+.inp{border:1.5px solid var(--line-2);border-radius:var(--r-field);padding:13px 16px;font-size:16px;min-height:50px;background:var(--surface);line-height:1.4}
+.inp.ta{min-height:96px}.inp.hint{color:var(--text-3)}.inp.foc{border-color:var(--field-active)}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface-3);border-radius:var(--r-btn);padding:0 14px;height:44px;color:var(--text-2);font-size:15px}
+.ph{background:var(--surface-2);border-radius:12px;display:grid;place-items:center;color:var(--text-3);position:relative;overflow:hidden}
+.ph.pe{background:var(--peach-soft);color:var(--warm)}.ph.mi{background:var(--mint-soft);color:var(--primary)}.ph.sa{background:var(--sand);color:var(--text-2)}
+.ph .cap{position:absolute;left:8px;bottom:8px;font-size:10.5px;background:var(--surface);padding:2px 7px;border-radius:6px;color:var(--text-2)}
+.ph .tag{position:absolute;left:8px;top:8px}
+.tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);padding:14px 0 24px;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -6px 20px -12px rgba(43,48,54,.25);position:relative;z-index:2}
+.tabbar button{display:grid;justify-items:center;color:var(--text-3);text-align:center}
+.tabbar button span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tabbar .on{color:var(--text)}
+.opt{display:flex;gap:10px;align-items:center;border:1.5px solid var(--line-2);border-radius:var(--r-card);padding:12px 14px;width:100%;text-align:left;margin-top:8px}
+.opt.on{border-color:var(--primary);background:var(--primary-soft2)}
+.opt .rd{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none}
+.opt.on .rd{border:5px solid var(--primary)}
+.chk{width:24px;height:24px;border-radius:7px;border:1.5px solid var(--line-2);display:grid;place-items:center;color:transparent;flex:none}
+.chk.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.stp{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:15px;margin-top:10px;line-height:1.4}
+.stp b{width:22px;height:22px;border-radius:50%;background:var(--primary-soft);color:var(--primary-strong);display:grid;place-items:center;font-size:11px}
+.stp.on b{background:var(--primary);color:var(--on-primary)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats.two{grid-template-columns:1fr 1fr}
+.stat{background:var(--surface-2);border-radius:var(--r-card);padding:10px 12px}
+.stat b{display:block;font-size:20px;font-weight:700;line-height:1.2}
+.stat span{font-size:11px;color:var(--text-2);line-height:1.3;display:block}
+.stat.dp{background:var(--deep);color:var(--on-deep)}.stat.dp span{color:var(--on-deep-2)}
+.stat.wa{background:var(--warm-soft)}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 18px 8px var(--pad)}
+.lth{background:var(--primary);color:var(--on-primary);padding:14px var(--pad) 20px;flex:none}
+.lth .eb{font-size:13px;color:rgba(255,255,255,.8);order:2}
+.lth .lt{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.lth .lt.m{font-size:28px}
+.lth .hd{display:flex;flex-direction:column}
+.dotr{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--danger);box-shadow:0 0 0 2px var(--surface)}
+.banner{display:flex;align-items:center;gap:10px;background:var(--warm-soft);border-radius:14px;padding:12px 14px;width:100%;text-align:left}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center;font-size:12.5px;margin-top:14px}
+.quick button{display:grid;justify-items:center;gap:5px;text-align:center;line-height:1.2}
+.ni{display:grid;grid-template-columns:34px 1fr 8px;gap:12px;padding:12px var(--pad);width:100%;text-align:left}
+.ni.un{background:var(--primary-soft2)}
+.ni .dt{width:7px;height:7px;border-radius:50%;background:var(--primary);margin-top:6px}
+.grp{font-size:14px;font-weight:600;color:var(--text-2);padding:14px var(--pad) 4px}
+.toast{display:flex;gap:10px;align-items:center;background:var(--ink-bg);color:var(--ink-fg);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.35}
+.toast u{font-weight:600;white-space:nowrap}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tc{border:1px solid var(--line);border-radius:var(--r-card);padding:12px;text-align:left;display:grid;gap:6px;align-content:start}
+.tc.sel{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
+.scrim{flex:1;background:var(--scrim);display:grid;justify-items:center;align-content:center;color:var(--on-deep);text-align:center;gap:6px;padding:0 24px 20px}
+.sheet{background:var(--surface);border-radius:18px 18px 0 0;padding:8px 18px 16px;margin-top:-16px;position:relative}
+.handle{width:38px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto 12px}
+.mason{columns:2;column-gap:10px}.mason>*{break-inside:avoid;margin-bottom:12px;display:block;width:100%;text-align:left}
+.fab{position:absolute;right:20px;bottom:92px;display:flex;align-items:center;gap:6px;height:48px;padding:0 18px;border-radius:24px;background:var(--accent)!important;color:var(--on-accent)!important;background:var(--primary);color:var(--on-primary);font-weight:600;font-size:13.5px;box-shadow:0 8px 20px -8px rgba(20,60,48,.6)}
+.stories{display:flex;gap:12px;overflow-x:auto;margin:6px calc(var(--pad)*-1) 0;padding:4px var(--pad);scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{display:grid;justify-items:center;gap:4px;font-size:10.5px;flex:none;text-align:center}
+.story .ring{width:58px;height:58px;border-radius:50%;padding:3px;border:2px solid var(--primary)}
+.story.seen .ring{border-color:var(--line-2)}
+.story .ring>span{width:100%;height:100%;border-radius:50%;display:grid;place-items:center}
+.segs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.segs i{height:3px;border-radius:2px;background:rgba(255,255,255,.3)}.segs i.on{background:var(--on-deep)}
+.bar{display:flex;height:10px;border-radius:6px;overflow:hidden;gap:2px}
+.bar i{display:block;font-style:normal}
+.lg{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px}
+.slot{height:44px;border-radius:var(--r-field);border-width:1.5px;border:1px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:600}
+.slot.x{background:var(--surface-2);color:var(--text-3);text-decoration:line-through;font-weight:400;border-color:transparent}
+.slot.on{border:1.5px solid var(--primary);background:var(--primary-soft)}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.days button{border:1px solid var(--line);border-radius:var(--r-field);padding:6px 0;text-align:center;font-size:11px;color:var(--text-2)}
+.days button b{display:block;font-size:16px;color:var(--text)}
+.days button.on{background:var(--text);border-color:var(--text);color:var(--surface)}.days button.on b{color:var(--surface)}
+.spots{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.spots span{height:40px;border-radius:6px;background:var(--surface-2);display:grid;place-items:center;font-size:11px;font-weight:600;color:var(--text-3)}
+.spots .fr{background:var(--primary-soft);color:var(--primary-strong)}
+.spots .on{border:2px solid var(--primary);background:var(--primary-soft);color:var(--primary-strong)}
+.dateb{width:44px;flex:none;text-align:center;line-height:1.1}.dateb small{display:block;font-size:10.5px;color:var(--warm);font-weight:600}.dateb b{font-size:20px}
+.qrbox{background:var(--qr-bg);color:var(--qr-ink);border-radius:10px;padding:10px;display:inline-grid}
+.qrbox svg{display:block}
+/* тёмные экраны */
+.scr.dk{background:var(--deep);color:var(--on-deep)}
+.scr.dk .foot{background:var(--deep)}
+.scr.dk .mut,.scr.dk .sub{color:var(--on-deep-2)}
+.scr.dk .card{background:var(--deep-2);color:var(--on-deep);border-color:transparent}
+.scr.night{background:var(--night);color:var(--on-deep)}
+.scr.night .foot{background:var(--night)}
+.scr.night .mut{color:var(--on-deep-2)}
+.nc{background:rgba(255,255,255,.08);border-radius:16px;padding:12px 14px}
+.ring{--p:36}
+.donut{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:conic-gradient(var(--on-deep) calc(var(--p)*1%),rgba(255,255,255,.15) 0)}
+.donut span{width:42px;height:42px;border-radius:50%;background:var(--night);display:grid;place-items:center;line-height:1}
+.donut small{display:block;font-size:7px;font-weight:500;opacity:.7}
+.unlock{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;transition:background .2s}
+.unlock.on{background:var(--on-deep);color:var(--deep)}
+.cam{height:84px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;padding:8px;display:flex;align-items:flex-end;font-size:11px;font-weight:600}
+.cam::after{content:"";position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:#E5574A}
+/* кабинет ОСИ */
+.cab{display:grid;grid-template-columns:190px 1fr;height:100%;font-size:13px}
+.cab aside{background:var(--deep);color:var(--on-deep);padding:18px 12px}
+.cab aside nav{margin-top:18px;display:grid;gap:2px}
+.cab aside nav button{padding:8px 10px;border-radius:8px;font-size:13px;color:var(--on-deep-2);text-align:left}
+.cab aside nav button.on{background:var(--deep-2);color:var(--on-deep);font-weight:600}
+.cab main{background:var(--surface-2);padding:18px 20px;overflow:auto;color:var(--text)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.kpi{background:var(--surface);border-radius:12px;padding:12px}
+.kpi>b{font-size:24px;display:block;margin:4px 0 2px}
+.stage.wide{flex-direction:column}.stage.wide .info{position:static;max-width:880px}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-weight:600;color:var(--text-2);padding:6px 6px 6px 0;border-bottom:1px solid var(--line)}
+.tbl td{padding:8px 6px 8px 0;border-bottom:1px solid var(--line)}
+.tbl tr:last-child td{border-bottom:0}
+.i{flex:none;display:block}
+.rfab{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;flex:none}
+.rfab.g{background:var(--primary);color:var(--on-primary)}.rfab.o{background:var(--accent);color:var(--on-accent)}
+.bm{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--line-2);display:grid;place-items:center;color:var(--text-2);flex:none}
+.bm.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.logo{flex:none;display:block}
+
+/* ===== Режим прототипа ===== */
+body{overflow:hidden}
+.pbar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;padding-top:env(safe-area-inset-top,0px);z-index:20;color:var(--text)}
+.ptitle{display:grid;justify-items:center;font-size:14px;line-height:1.25}
+.ptitle span{font-size:12px;color:var(--text-2)}
+.pbtn{display:flex;align-items:center;gap:6px;height:38px;padding:0 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line-2);font-size:13px;font-weight:500}
+.pstage{position:fixed;inset:56px 0 0 0;display:grid;place-items:center;overflow:hidden}
+.pscale{transform-origin:center center}
+.phone{box-shadow:0 30px 70px -30px rgba(20,60,50,.5)}
+.phone.hint [data-go],.phone.hint .chip,.phone.hint [data-seg] button,.phone.hint .chk,.phone.hint .opt,.phone.hint .pollo{outline:2px solid var(--primary);outline-offset:1px;background-color:rgba(46,171,143,.12)}
+.scrimd{position:fixed;inset:0;background:rgba(20,30,28,.35);z-index:29}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:min(340px,88vw);background:var(--surface);z-index:30;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.2);padding-top:env(safe-area-inset-top,0px)}
+.drawer[hidden],.scrimd[hidden]{display:none}
+.dhead{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 6px}
+.dinfo{padding:4px 16px 10px;border-bottom:1px solid var(--line)}
+.dinfo h2{font-size:17px;margin:4px 0}
+.dinfo .note{font-size:13px;line-height:1.5;color:var(--text-2);margin-top:8px}
+.dinfo .crumb{font-size:12px;color:var(--text-2)}
+.dinfo code{font-size:11.5px;background:var(--surface-2);padding:1px 6px;border-radius:5px;color:var(--text-2)}
+.dinfo .pn,.dinfo .hint{display:none}
+.drawer .side{position:static;max-height:none;flex:1;overflow:auto;padding:6px 10px 24px}
+.drawer .pick{display:none}
+@media (max-width:520px){
+  .pbar{background:none;pointer-events:none;justify-content:center;gap:8px;height:34px;top:0;padding:0}
+  .pbar .pbtn{height:26px;padding:0 8px;border-radius:13px}
+  .pbar .ptitle{display:none}
+  .pbar .pbtn{pointer-events:auto;opacity:.92;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+  .pbar .pbtn span{display:none}
+  .pstage{inset:0}
+  .phone,.phone.wide{border:0;border-radius:0;box-shadow:none}
+}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2EAB8F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Соседи">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+</head>
+<body>
+<div class="pbar">
+  <button class="pbtn" id="openDrawer" aria-label="Все экраны"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Экраны</span></button>
+  <div class="ptitle"><b>Тредо Соседи</b><span id="pcount"></span></div>
+  <button class="pbtn" id="restart" aria-label="Начать сначала"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.5-5.8L4 8.5M4 4v4.5h4.5"/></svg><span>Сначала</span></button>
+</div>
+<main class="pstage" id="pstage"><div class="pscale" id="pscale"><div class="phone" id="phone"></div></div></main>
+<div class="scrimd" id="scrimd" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Экраны прототипа" hidden>
+  <div class="dhead"><b>Экраны</b><button class="pbtn" id="closeDrawer" aria-label="Закрыть">✕</button></div>
+  <div class="dinfo" id="info"></div>
+  <select class="pick" id="pick" aria-label="Выбрать экран"></select>
+  <nav class="side" id="side"></nav>
+</aside>
+<script>
+/* ===== Иконки ===== */
+const LIKE='<path d="M7 11v9H4v-9zM7 11l4-8a2 2 0 0 1 2 2v4h6l-2 11H7"/>';
+const P={
+back:'<path d="M20 12H4M10 6l-6 6 6 6"/>',fwd:'<path d="m9 18 6-6-6-6"/>',down:'<path d="m6 9 6 6 6-6"/>',close:'<path d="M18 6 6 18M6 6l12 12"/>',
+bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+car:'<path d="M5 17h14v-5l-2-5H7l-2 5z"/><circle cx="8" cy="17" r="1.6"/><circle cx="16" cy="17" r="1.6"/><path d="M5 12h14"/>',
+wrench:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/>',
+bag:'<path d="M6 7h12l1 14H5z"/><path d="M9 7a3 3 0 0 1 6 0"/>',chart:'<path d="M4 20h16"/><path d="M7 16v-4M12 16V7M17 16v-6"/>',
+home:'<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>',plus:'<path d="M12 5v14M5 12h14"/>',
+plusc:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',check:'<path d="m5 12 5 5 9-10"/>',
+drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+dropoff:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/><path d="M4 4l16 16"/>',
+share:'<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v7h14v-7"/>',camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+qr:'<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 19h2M19 14h1"/>',
+userplus:'<circle cx="10" cy="8" r="4"/><path d="M2 21a8 8 0 0 1 14-5.3"/><path d="M19 14v6M16 17h6"/>',
+alert:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+unlock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+gift:'<rect x="4" y="9" width="16" height="11"/><path d="M3 9h18M12 9v11M12 9S10 4 7.5 5.5 9 9 12 9zM12 9s2-5 4.5-3.5S15 9 12 9z"/>',
+tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8" r="1.3"/>',ask:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17v.3"/>',
+up:'<path d="M12 19V5M6 11l6-6 6 6"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',doc:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7"/>',
+mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',send:'<path d="M4 12 20 4l-6 16-3-7z"/>',
+spark:'<path d="M12 3c.5 4 2 5.5 6 6-4 .5-5.5 2-6 6-.5-4-2-5.5-6-6 4-.5 5.5-2 6-6zM19 15c.2 1.6.8 2.2 2.4 2.4-1.6.2-2.2.8-2.4 2.4-.2-1.6-.8-2.2-2.4-2.4 1.6-.2 2.2-.8 2.4-2.4z"/>',
+trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+paw:'<circle cx="6.5" cy="11" r="1.8"/><circle cx="17.5" cy="11" r="1.8"/><circle cx="9.5" cy="6.5" r="1.8"/><circle cx="14.5" cy="6.5" r="1.8"/><path d="M8 17.5c0-3 2-5.5 4-5.5s4 2.5 4 5.5c0 2-2 2.5-4 2.5s-4-.5-4-2.5z"/>',
+calendar:'<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+building:'<path d="M5 21V5l7-2v18M12 8h7v13M3 21h18"/><path d="M8 8v.5M8 12v.5M8 16v.5M15 12v.5M15 16v.5"/>',
+barrier:'<path d="M5 21V7M3 21h4M5 10h16"/><circle cx="5" cy="6" r="1.5"/><path d="M9 10l2 0M14 10h2"/>',
+gate:'<path d="M5 21V4M19 21V4M5 8h14M5 14h14M9 8v6M14 8v6"/>',
+video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>',
+wifioff:'<path d="M3 3l18 18M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5-2.7M14 10.3a10 10 0 0 1 5 2.7M2 9.5a15 15 0 0 1 4.5-2.8M12 20h.01"/>',
+like:LIKE,dislike:'<g transform="rotate(180 12 12)">'+LIKE+'</g>',
+park:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M10 16V8h3a2.5 2.5 0 0 1 0 5h-3"/>',
+cart:'<circle cx="8" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/><path d="M3 5h3l2 9h10l2-7H7"/>',
+stroller:'<circle cx="8" cy="19" r="1.8"/><circle cx="17" cy="19" r="1.8"/><path d="M4 5h2l1.5 9h11c0-5-3.5-9-8-9v9"/>',
+book:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5M9 7h6"/>',
+cake:'<path d="M4 21h16v-8H4zM4 16c2.7 1.3 5.3 1.3 8 0s5.3-1.3 8 0"/><path d="M8 13V9M16 13V9M12 13V9M8 6v.5M12 5v.5M16 6v.5"/>',
+pin:'<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+bike:'<circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-7h5l3 7M10 9l3 7M14 6h2"/>',
+sofa:'<path d="M4 11V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3"/><path d="M3 11h18v6H3zM5 17v2M19 17v2"/>',
+card:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>',
+refresh:'<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/>',
+tree:'<path d="M12 21v-5M7 16h10l-3-4h2l-4-5-4 5h2z"/>',party:'<path d="M4 20l5-14 9 9z"/><path d="M14 4v2M18 6l-1.5 1.5M20 10h-2"/>',
+heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+filter:'<path d="M4 6h16M7 12h10M10 18h4"/>',
+dotf:'<circle cx="12" cy="12" r="9.5" fill="currentColor" stroke="none"/>',
+mailf:'<rect x="2.5" y="5" width="19" height="14" rx="2" fill="currentColor" stroke="none"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5" stroke="var(--surface)" stroke-width="1.6"/>',
+userf:'<circle cx="12" cy="7.5" r="4.5" fill="currentColor" stroke="none"/><path d="M3.5 21c0-4.5 3.8-7.5 8.5-7.5s8.5 3 8.5 7.5z" fill="currentColor" stroke="none"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+pen:'<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+listic:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/>',chev:'<path d="m9 18 6-6-6-6"/>',
+mail:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/>',
+bookmark:'<path d="M6 3h12v18l-6-4.5L6 21z"/>',
+phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+};
+const I=(n,s=20,w=1.8)=>`<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]||''}</svg>`;
+
+/* ===== Компоненты (в коде приложения это отдельные компоненты: Button, Chip, Card…) ===== */
+const SB=()=>`<div class="sb"><b>9:41</b><span class="sbi"><i></i><i></i><i></i><s></s></span></div>`;
+const NAV=(t='',o={})=>`<div class="nav ${o.l?'l':''}">${o.noback?'<span></span>':`<button class="nb" data-go="${o.to||'@back'}" aria-label="${o.x?'Закрыть':'Назад'}">${I(o.x?'close':'back',22)}</button>`}<div class="nt">${t}</div><div class="nr">${o.r||''}</div></div>`;
+const BT=(t,k='p',go='',ic='')=>`<button class="btn ${k}"${go?` data-go="${go}"`:''}>${ic?I(ic,18):''}<span>${t}</span></button>`;
+const CH=(a,on=0,o={})=>`<div class="chips${o.row?' scroll':''}" ${o.multi?'data-multi':'data-single'}>${a.map((c,i)=>{const s=Array.isArray(on)?on.includes(i):i===on;return `<button class="chip${s?' on':''}" aria-pressed="${s}">${c}</button>`}).join('')}</div>`;
+const SEG=(a,on=0,c='')=>`<div class="seg ${c}" data-seg>${a.map((c,i)=>`<button class="${i===on?'on':''}" aria-pressed="${i===on}">${c}</button>`).join('')}</div>`;
+const AV=(t,c='pe',s=36)=>`<span class="av ${c}" style="--s:${s}px">${t}</span>`;
+const BD=(t,c='')=>`<span class="badge ${c}">${t}</span>`;
+const TL=(ic,c='m',s=38)=>`<span class="tile ${c}" style="width:${s}px;height:${s}px">${I(ic,Math.round(s*.5))}</span>`;
+const PR=(p,mk,cls='')=>`<div class="prog ${cls}"><i style="width:${p}%"></i>${mk?`<b style="left:${mk}%"></b>`:''}</div>`;
+const RW=(a,b,cls='')=>`<div class="row ${cls}"><span>${a}</span><span>${b}</span></div>`;
+const CK=on=>`<button class="chk${on?' on':''}" role="checkbox" aria-checked="${!!on}" aria-label="Переключить">${I('check',14,2.6)}</button>`;
+const PL=(n,r='02',f)=>`<div class="plate${f?' foc':''}"><span>${n}</span><em>${r}<small>KZ</small></em></div>`;
+const PS=n=>`<span class="plsm">${n}</span>`;
+const PO=(t,p,on,gray)=>`<button class="pollo${on?' on':''}${gray?' gray':''}"><i style="width:${p}%"></i><span>${t}</span><b>${p}%</b></button>`;
+const LB=(t,c='')=>`<div class="lbl ${c}">${t}</div>`;
+const ST=(n,t,on)=>`<div class="stp${on?' on':''}"><b>${n}</b><span>${t}</span></div>`;
+const STAT=(b,s,c='')=>`<div class="stat ${c}"><b>${b}</b><span>${s}</span></div>`;
+const PHW=(w,...a)=>PH(...a).replace('style="height:',`style="width:${w}px;flex:none;height:`);
+const PH=(ic,h,c='',cap='',tag='')=>`<div class="ph ${c}" style="height:${h}px">${I(ic,30,1.5)}${cap?`<span class="cap">${cap}</span>`:''}${tag?`<span class="tag">${tag}</span>`:''}</div>`;
+const TS=(st,t,sub='',x='')=>`<div class="st ${st}"><span class="dot">${st==='done'?I('check',12,3):''}</span><div><div class="b s">${t}</div>${sub?`<div class="xs mut">${sub}</div>`:''}${x}</div></div>`;
+const OPT=(t,sub,r,on)=>`<button class="opt${on?' on':''}"><span class="rd"></span><span class="grow"><span class="b s" style="display:block">${t}</span><span class="xs mut">${sub}</span></span><span class="b s">${r}</span></button>`;
+const TAB=a=>{const T=[['home','Главная','home'],['plusc','Создать','templates'],['mail','Сообщения','chats-empty'],['user','Аккаунт','trust']];return `<nav class="tabbar">${T.map(([ic,l,g],i)=>`<button class="${i===a?'on':''}" data-go="${g}" aria-label="${l}">${I(ic,26,1.7)}<span>${l}</span></button>`).join('')}</nav>`};
+/* Логотип Соседей: оранжевая «с», зелёная «о», две точки */
+const LOGO=(s=28)=>`<svg class="logo" width="${s}" height="${s}" viewBox="0 0 32 32" aria-label="Соседи"><circle cx="9" cy="6" r="3.6" fill="var(--accent)"/><circle cx="21" cy="6" r="3.6" fill="var(--primary)"/><path d="M15.5 15.6a6.6 6.6 0 1 0 0 9.8" fill="none" stroke="var(--accent)" stroke-width="4.4" stroke-linecap="round"/><circle cx="22.6" cy="20.5" r="5.3" fill="none" stroke="var(--primary)" stroke-width="4.4"/></svg>`;
+/* Большой заголовок корневых экранов, как «Новое объявление» и «Чаты» в старом дизайне */
+const LTH=(eb,t,r='',m)=>`<div class="lth"><div class="flex between top-a"><div class="hd"><div class="lt${m?' m':''}">${t}</div><div class="eb">${eb}</div></div>${r}</div></div>`;
+const SCR=o=>`<div class="scr ${o.cls||''}">${o.nosb?'':SB()}${o.nav||''}<div class="body ${o.bcls||''}">${o.body}</div>${o.foot?`<div class="foot">${o.foot}</div>`:''}${o.tab!==undefined?TAB(o.tab):''}${o.extra||''}</div>`;
+function QR(px=120,seed=7){const n=21;let r=seed;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};let s='';
+  const fin=(x,y)=>`<rect x="${x}" y="${y}" width="7" height="7"/><rect x="${x+1}" y="${y+1}" width="5" height="5" fill="var(--qr-bg)"/><rect x="${x+2}" y="${y+2}" width="3" height="3"/>`;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if((x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12))continue;if(rnd()>.52)s+=`<rect x="${x}" y="${y}" width="1" height="1"/>`}
+  return `<span class="qrbox"><svg width="${px}" height="${px}" viewBox="0 0 21 21" fill="currentColor" shape-rendering="crispEdges" aria-label="QR-код">${fin(0,0)}${fin(14,0)}${fin(0,14)}${s}</svg></span>`}
+
+/* ===== Экраны. Каждый экран: n — название, h() — разметка ===== */
+const S={};
+
+/* --- 1. Вход: адрес подтверждён --- */
+S['confirm']={n:'Подтверждение адреса',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Подтвердите, что вы живёте здесь</h1>
+<p class="sub">Abay130, подъезд 1, кв. 34. Так соседи знают, что пишут настоящему соседу.</p>
+<div class="card sel mt3"><div class="flex top-a">${TL('qr')}<div class="grow"><div class="b">Код из подъезда</div><div class="xs mut">Он на листовке у лифта. Можно отсканировать QR-код камерой.</div></div></div>
+<div class="code mt"><span>4</span><span>7</span><span>2</span><span class="cur"></span><span></span><span></span></div>
+<div class="mt2">${BT('Сканировать QR-код','o sm','','qr')}</div></div>
+<div class="card mt2"><div class="flex top-a">${TL('userplus','wa')}<div class="grow"><div class="b">Приглашение от соседа</div><div class="xs mut">Сосед из приложения отправит вам ссылку, и адрес подтвердится сам.</div></div></div></div>`,
+foot:BT('Подтвердить','p','car')+BT('Пока только посмотреть ленту','g','home')})};
+
+S['wrong-code']={n:'Неверный код',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Подтвердите, что вы живёте здесь</h1>
+<p class="sub">Abay130, подъезд 1, кв. 34</p>
+${LB('Код из подъезда')}
+<div class="code err"><span>4</span><span>7</span><span>2</span><span>9</span><span>1</span><span>5</span></div>
+<div class="errt">${I('alert',15)}<span>Этот код не подходит к подъезду 1. Осталось 2 попытки.</span></div>
+<div class="card f mt3"><div class="b s">Почему так бывает</div><p class="xs mut mt2">Код обновляется 1-го числа каждого месяца. Проверьте листовку у лифта: дата обновления написана под кодом.</p><p class="xs mut mt2">Если выбрали не тот подъезд, <b class="g">поменяйте адрес</b>.</p></div>`,
+foot:BT('Ввести код заново','p','confirm')+BT('Попросить приглашение у соседа','o','confirm')})};
+
+S['car']={n:'Номер авто',h:()=>SCR({nav:NAV(`<span style="display:inline-flex;gap:4px">${PR(100,0).replace('prog','prog" style="width:22px')}${PR(100,0).replace('prog','prog" style="width:22px')}${PR(100,0).replace('prog','prog" style="width:22px')}</span>`,{r:'<button class="g b s" data-go="done">Пропустить</button>'}),body:`
+<h1 class="h1">Есть машина?</h1>
+<p class="sub">Если вас перекроют во дворе, сосед найдёт вас по номеру и напишет в приложении. Номер видят только как «сосед из 1 подъезда».</p>
+${LB('Госномер')}
+${PL('123 ABC','02',true)}
+<button class="btn g" style="justify-content:flex-start;padding:0">${I('plus',16)}<span>Добавить ещё одну машину</span></button>
+<div class="card f flex mt2"><span class="grow s">Сообщать, если моя машина кому-то мешает</span>${CK(1)}</div>`,
+foot:BT('Сохранить','p','done')+BT('У меня нет машины','g','done')})};
+
+S['done']={n:'Готово: соседи и отключение',h:()=>SCR({nav:'<div style="height:22px"></div>',body:`
+<div class="xs g b">Адрес подтверждён</div>
+<h1 class="h1 xl">Вы в Abay130</h1>
+<div class="card m mt">
+<div class="avs">${AV('АМ','pe',32)}${AV('ЖМ','mi',32)}${AV('АМ','am',32)}${AV('+9','dp',32)}</div>
+<div class="h2 mt" style="color:var(--primary-strong)">В вашем подъезде уже 12 соседей</div>
+<p class="xs mut mt2">И ещё 86 по всему ЖК. Скажите «привет» в чате подъезда.</p></div>
+<button class="card mt2 flex top-a" data-go="outage">${TL('dropoff','wa')}<span class="grow"><span class="xs w b" style="display:block">Ближайшее отключение</span><span class="b" style="display:block">Горячая вода, 1 подъезд</span><span class="xs mut">Чт, 24 октября, 10:00–18:00</span></span></button>`,
+foot:`<p class="fine">Предупредим за день и напомним утром, без лишних рассылок.</p>${BT('Включить уведомления','p','home','bell')}${BT('Перейти в ленту','g','home')}`})};
+
+/* --- 2. ЖК ещё не подключён --- */
+S['not-connected']={n:'ЖК ещё не подключён',h:()=>SCR({nav:NAV(),body:`
+<div class="center mt"><span class="tile wa" style="width:76px;height:76px;border-radius:50%;margin:0 auto">${I('building',34)}</span>
+<h1 class="h2 mt3">ЖК «Хан-Тенгри» пока не подключён</h1>
+<p class="sub mt2">Вы среди первых. Мы откроем ЖК, когда в приложении будет 30 соседей.</p></div>
+<div class="card f mt3"><div class="flex between"><span class="b s">Уже ждут открытия</span><span class="b s g">7 из 30</span></div>
+<div class="mt2">${PR(23)}</div>
+<div class="flex mt">${`<div class="avs">${AV('АК','pe',26)}${AV('ДМ','mi',26)}${AV('ЕС','am',26)}</div>`}<span class="xs mut">из 1, 3 и 5 подъездов</span></div></div>`,
+foot:BT('Позвать соседей в чат дома','p','waitlist','share')+BT('Сообщить, когда откроемся','o','waitlist')+`<p class="fine">Ошиблись с адресом? <b class="g">Изменить</b></p>`})};
+
+S['waitlist']={n:'Лист ожидания',h:()=>SCR({nav:'<div style="height:16px"></div>',body:`
+<span class="badge m" style="padding:6px 14px;border-radius:12px">${I('check',18,2.4)}</span>
+<h1 class="h1 mt">Вы в списке ожидания</h1>
+<p class="sub">ЖК «Хан-Тенгри», подъезд 3, кв. 58. Вы восьмой из 30 соседей, нужных для запуска.</p>
+<div class="mt">${ST(1,'Каждый приглашённый сосед приближает запуск. Счётчик пришлём в SMS.',1)}${ST(2,'Когда наберётся 30 человек, откроем ленту, чаты подъездов и барахолку.')}${ST(3,'Первые 30 соседей получат значок основателя и бесплатные поднятия объявлений.')}</div>
+<div class="card mt3"><div class="b s">Готовый текст для чата дома</div>
+<div class="card f mt2 xs mut" style="line-height:1.5">Соседи, для нашего ЖК запускают приложение: отключения, барахолка, мастера, связь по номеру машины. Не хватает 22 человек: [ССЫЛКА]</div>
+<div class="mt2">${BT('Отправить в чат дома','p sm','','send')}</div></div>`,
+foot:BT('Закрыть','g','not-connected')})};
+
+/* --- 3. Главная и отключения --- */
+const HOMEHDR=()=>`<div class="hdr"><span class="flex" style="gap:10px">${LOGO(30)}<button style="text-align:left"><span class="flex" style="gap:3px;font-size:15px;font-weight:500">ЖК «Abay130» ${I('down',15)}</span></button></span><span class="flex" style="gap:2px"><button class="nb" aria-label="Избранное">${I('bookmark',22,1.7)}</button><button class="nb" data-go="notifications" aria-label="Уведомления">${I('bell',22,1.7)}<i class="dotr"></i></button></span></div>`;
+const OUTBANNER=()=>`<button class="banner" data-go="outage">${I('dropoff',20)}<span class="grow"><span class="b s" style="display:block">Завтра нет горячей воды</span><span class="xs w">1 подъезд, 10:00–18:00</span></span>${I('fwd',18)}</button>`;
+S['home']={n:'Главная с отключением и опросом',h:()=>SCR({nav:HOMEHDR(),bcls:'flush',body:`
+<div style="padding:4px var(--pad) 14px">${OUTBANNER()}
+<div class="quick">
+<button data-go="car-search">${TL('car','m',46)}<span>Кто перекрыл</span></button>
+<button data-go="masters">${TL('wrench','m',46)}<span>Мастера</span></button>
+<button data-go="flea-grid">${TL('bag','m',46)}<span>Барахолка</span></button>
+<button data-go="poll-results">${TL('chart','m',46)}<span>Опросы</span></button></div></div>
+<div class="sect"><div class="flex">${BD('Опрос соседей','m')}<span class="xs mut">2 подъезд, до пятницы</span></div>
+<div class="h3 mt2">Ставим лавочки у второго подъезда?</div>
+<div data-poll>${PO('Да, две у входа',68,0)}${PO('Нет, будет шумно',32,0,1)}</div>
+<p class="xs mut mt2">41 сосед проголосовал</p></div>
+<div class="sect"><div class="flex">${BD('Вопрос')}<span class="xs mut">Динара, 3 подъезд, 20 мин назад</span></div>
+<div class="h3 mt2">Кто знает хорошего электрика? Искрит розетка на кухне</div>
+<button class="xs g b mt2" data-go="masters">4 ответа</button></div>
+<div class="sect"><div class="flex">${BD('Отдам даром','wa')}<span class="xs mut">Камила, 1 подъезд, 1 ч назад</span></div>
+<div class="flex mt2 top-a">${PHW(64,'stroller',64,'pe')}<div><div class="h3">Детская коляска 2 в 1</div><p class="xs mut">Катали одного ребёнка, колёса целые</p></div></div></div>`,tab:0})};
+
+S['outage']={n:'Карточка отключения',h:()=>SCR({nav:NAV('',{r:`<button class="nb" aria-label="Поделиться">${I('share',20)}</button>`}),body:`
+<div class="badges">${BD('Завтра','wa')}${BD('Плановое')}</div>
+<h1 class="h1 mt2">Нет горячей воды</h1>
+<div class="h3">Чт, 24 октября, 10:00–18:00</div>
+<div class="rows mt">${RW('Где','1 подъезд, стояки 1–4')}${RW('Причина','Замена задвижки в подвале')}${RW('Источник','ОСИ Abay130, 23 окт')}</div>
+<div class="card f mt"><div class="b s">Подготовьтесь заранее</div><p class="xs mut mt2">Если у вас бойлер, включите его с вечера. Стиральную и посудомоечную машины лучше запустить до 10:00.</p></div>
+<div class="flex between mt3"><span class="s">Напомнить завтра в 08:00</span>${CK(1)}</div>
+<div class="card mt4"><div class="b s">После 18:00 воды всё ещё нет?</div><p class="xs mut">Отметьте, и ОСИ увидит, сколько квартир без воды.</p><div class="mt">${BT('Воды нет, сообщить в ОСИ','o sm','osi-request')}</div></div>`})};
+
+const NI=(ic,c,t,sub,un,go,x='')=>`<button class="ni${un?' un':''}" ${go?`data-go="${go}"`:''}>${typeof ic==='string'&&ic.startsWith('<')?ic:TL(ic,c,34)}<span><span class="s" style="display:block">${t}</span>${x}<span class="xs mut3">${sub}</span></span>${un?'<span class="dt"></span>':'<span></span>'}</button>`;
+S['notifications']={n:'Уведомления',h:()=>SCR({nav:NAV('Уведомления',{r:'<button class="g b s">Прочитать все</button>'}),bcls:'flush',body:`
+<div class="grp">Сегодня</div>
+${NI('dropoff','wa','<b>Завтра нет горячей воды</b> в 1 подъезде с 10:00 до 18:00','ОСИ Abay130, 09:12',1,'outage')}
+${NI(AV('ДА','pe',34),'','<b>На ваш вопрос ответили:</b> «Есть электрик Ерлан из 4 подъезда, делал мне проводку»','Дана, 3 подъезд, 08:40',1,'master')}
+${NI('box','m','<b>Ваш курьер у двери,</b> а вас нет дома. Сосед из кв. 31 готов принять посылку','07:55',1,'',`<span class="flex mt2" style="gap:6px"><span class="btn p sm auto" style="padding:0 12px">Да, спасибо</span><span class="btn o sm auto" style="padding:0 12px;border-color:var(--line-2);color:var(--text)">Не нужно</span></span>`)}
+<div class="grp">Раньше</div>
+${NI('bag','f','<b>Новое в барахолке:</b> детская коляска, отдают даром','Вчера, 19:20',0,'flea-grid')}
+${NI('doc','f','<b>Неделя в Abay130:</b> 2 отключения, 5 новых объявлений и опрос про лавочки','Пн, 10:00',0,'digest')}
+${NI('car','f','<b>Сосед отодвинул машину.</b> Выезд свободен','Сб, 08:31',0,'car-free')}`})};
+
+S['offline']={n:'Нет сети',h:()=>SCR({nav:HOMEHDR(),bcls:'flush',body:`
+<div style="padding:4px var(--pad) 14px"><div class="toast">${I('wifioff',18)}<span class="grow">Нет интернета. Показываем то, что загрузили в 08:40</span><u>Обновить</u></div><div class="mt2">${OUTBANNER()}</div></div>
+<div class="sect"><div class="xs mut">Вопрос, Динара, 3 подъезд</div><div class="h3 mt2">Кто знает хорошего электрика? Искрит розетка на кухне</div><p class="xs mut mt2">4 ответа</p></div>
+<div class="sect"><div class="xs mut">Ваш ответ</div><div style="text-align:right" class="mt2"><span class="bub mint" style="text-align:left">Ерлан из 4 подъезда, он мне делал проводку</span></div>
+<div class="flex xs mut3 mt2" style="justify-content:flex-end;gap:5px">${I('clock',13)}Отправим, когда появится сеть</div></div>`,tab:0})};
+
+/* --- 4. Кто перекрыл авто --- */
+S['car-search']={n:'Поиск по номеру',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Кто перекрыл авто?</h1>
+<p class="sub">Введите номер машины, которая мешает. Мы напишем владельцу, ваш номер телефона он не увидит.</p>
+${LB('Номер машины')}${PL('777 KZA','02',true)}
+<div class="mt2">${BT('Сфотографировать номер','o sm','','camera')}</div>
+${LB('Как это работает','mt4')}
+${ST(1,'Ищем номер среди соседей ЖК',1)}${ST(2,'Владелец получает пуш и сообщение')}${ST(3,'Вы видите, что он прочитал и идёт')}`,
+foot:BT('Найти владельца','p','car-found')+BT('Номер не нашёлся? Пример','g','car-unknown')})};
+
+S['car-found']={n:'Владелец найден',h:()=>SCR({nav:NAV(`<span class="flex" style="gap:8px">${PS('777 KZA 02')}<span class="xs g b flex" style="gap:3px">${I('check',14,2.4)}Владелец найден</span></span>`,{l:1}),body:`
+<h1 class="h1">Сосед из 3 подъезда</h1><p class="sub">Обычно отвечает за 3 минуты</p>
+${LB('Что случилось')}${CH(['Перекрыли выезд','Горят фары','Открыто окно','Сработала сигнализация'],0)}
+<div class="card f mt3">
+<div class="flex between s"><span class="flex">${I('check',16,2.4).replace('class="i"','class="i g"')}Сообщение отправлено</span><span class="xs mut3">08:24</span></div>
+<div class="flex between s mt2"><span class="flex">${I('check',16,2.4).replace('class="i"','class="i g"')}Прочитано</span><span class="xs mut3">08:25</span></div>
+<div class="flex top-a mt">${AV('С','pe',26)}<span class="bub" style="background:var(--surface)">Извините! Выхожу, буду через 2 минуты</span></div></div>`,
+foot:BT('Выезд свободен','p','car-free')+BT('Ответить в чате','o','chat-summary')})};
+
+S['car-free']={n:'Выезд свободен',h:()=>SCR({nav:'<div style="height:16px"></div>',body:`
+<span class="tile m" style="width:60px;height:60px;border-radius:50%">${I('check',28,2.4)}</span>
+<h1 class="h1 mt">Выезд свободен</h1>
+<p class="sub">Сосед из 3 подъезда отодвинул машину 777 KZA 02 через 4 минуты после сообщения.</p>
+${LB('Ответить соседу')}${CH(['Спасибо!','Без проблем, бывает','Ничего не отправлять'],0)}
+<div class="card wa mt4"><p class="s"><b>Эта машина перекрывает вас третий раз за месяц.</b> Можно сообщить в ОСИ, чтобы разметили места у шлагбаума.</p><div class="mt">${BT('Сообщить в ОСИ','wm sm','osi-request')}</div></div>`,
+foot:BT('Готово','p','home')})};
+
+S['car-unknown']={n:'Номера нет в базе',h:()=>SCR({nav:NAV(),body:`
+${PS('555 ORT 02')}
+<h1 class="h1 mt">Этого номера пока нет у соседей</h1>
+<p class="sub">Может, это гость или сосед ещё не в приложении. Вот что можно сделать сейчас.</p>
+<div data-radio class="mt">
+<button class="opt"><span class="tile m" style="width:34px;height:34px">${I('chat',17)}</span><span class="grow"><span class="b s" style="display:block">Спросить в чате ЖК</span><span class="xs mut">Опубликуем номер с просьбой отодвинуть</span></span></button>
+<button class="opt on"><span class="tile wa" style="width:34px;height:34px">${I('share',17)}</span><span class="grow"><span class="b s" style="display:block">Пригласить владельца</span><span class="xs mut">Ссылка или записка с QR-кодом на лобовое стекло</span></span></button></div>
+<div class="center mt3"><div class="card flex" style="display:inline-flex;width:auto;text-align:left;box-shadow:0 6px 18px -10px rgba(0,0,0,.35)">${QR(54,3)}<span class="xs" style="max-width:120px"><b>Ваша машина мешает выезду.</b> Отсканируйте, чтобы быстро связаться с соседом</span></div>
+<p class="fine mt2">Так будет выглядеть записка</p></div>`,
+foot:BT('Отправить приглашение','p','car-note')})};
+
+S['car-note']={n:'Записка с QR',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Записка готова</h1>
+<p class="sub">Покажите её с экрана, положите под дворник распечатку или отправьте ссылку в чат ЖК.</p>
+<div class="card center mt" style="box-shadow:0 8px 24px -14px rgba(0,0,0,.35)">${PS('555 ORT 02')}
+<div class="h3 mt">Ваша машина мешает выезду соседу</div>
+<div class="mt">${QR(132,11)}</div>
+<p class="xs mut mt2">Отсканируйте, чтобы ответить соседу и узнать, кто ещё живёт в Abay130</p></div>
+<div class="card m mt2 flex">${I('bell',18)}<span class="xs">Напишем вам, как только владелец отсканирует код</span></div>`,
+foot:`<div class="two">${BT('Сохранить','o')}${BT('В чат ЖК','p','chat-summary')}</div>`})};
+
+/* --- 5. Найти мастера --- */
+const MC=(i,c,t,d,b,go,ad)=>`<button class="card flex top-a mt2" data-go="${go}">${AV(i,c,40)}<span class="grow"><span class="flex between"><span class="b s">${t}</span>${ad?'<span class="xs mut3">Реклама</span>':''}</span><span class="xs mut" style="display:block">${d}</span><span class="badges mt2">${b}</span></span></button>`;
+S['masters']={n:'Каталог мастеров',h:()=>SCR({nav:NAV('Мастера и услуги',{l:1}),body:`
+<div class="search">${I('search',18)}Кого ищете?</div>
+<div class="mt">${CH(['Все','Электрик','Сантехник','Клининг','Вынос мусора'],0,{row:1})}</div>
+<div class="mt">
+${MC('ЕК','pe','Ерлан, электрик','Розетки, проводка, люстры',BD('Сосед, 4 подъезд','m')+BD('Рекомендуют 8 соседей'),'master',1)}
+${MC('АС','mi','Айгерим, уборка квартир','Генеральная и после ремонта',BD('Работала в 14 квартирах ЖК'),'master')}
+${MC('ТБ','am','Тимур, вынос мусора','Каждый вечер, можно разово',BD('Сосед, 2 подъезд','m')+BD('Рекомендуют 3 соседа'),'help')}
+${MC('РН','gr','Руслан, сантехник','Смесители, бойлеры, засоры',BD('Советовали в чате ЖК 5 раз'),'master')}</div>`,
+foot:`<div class="flex between"><span class="xs mut">Вы мастер или знаете хорошего?</span><button class="btn o sm auto">Добавить</button></div>`})};
+
+S['master']={n:'Профиль мастера',h:()=>SCR({nav:NAV(),body:`
+<div class="flex">${AV('ЕК','pe',60)}<div><div class="h2">Ерлан Касымов</div><div class="xs mut">Электрик, 9 лет опыта</div></div></div>
+<div class="badges mt">${BD('Сосед, 4 подъезд','m')}${BD('Рекомендуют 8 соседей')}${BD('Отвечает за час')}</div>
+${LB('Цены')}<div class="rows">${RW('Замена розетки','[ЦЕНА] ₸','plain')}${RW('Установка люстры','[ЦЕНА] ₸','plain')}${RW('Выезд с диагностикой','[ЦЕНА] ₸','plain')}</div>
+<div class="flex between"><div class="lbl">Что говорят соседи</div><span class="xs g b">Все 8</span></div>
+<div class="card f"><p class="s">«Поменял всю проводку на кухне за день, убрал за собой. Цена как договорились»</p><p class="xs mut3 mt2">Дана, 3 подъезд, сентябрь</p></div>
+<div class="card f mt2"><p class="s">«Пришёл через 40 минут, когда выбило пробки»</p><p class="xs mut3 mt2">Алибек, 1 подъезд, август</p></div>`,
+foot:`<div class="flex"><button class="rfab g" aria-label="Позвонить">${I('phone',20)}</button><div class="grow">${BT('Оставить заявку','p','request')}</div></div>`})};
+
+S['request']={n:'Заявка мастеру',h:()=>SCR({nav:NAV('Заявка Ерлану'),body:`
+${LB('Что нужно сделать','first')}${CH(['Розетка','Проводка','Люстра','Другое'],0)}
+${LB('Опишите проблему')}<div class="inp ta">Искрит розетка над столешницей на кухне, выбило автомат один раз</div>
+<div class="flex mt2">${PHW(56,'camera',56,'sa','')}<span class="ph" style="width:56px;height:56px;border:1.5px dashed var(--line-2);background:none">${I('plus',20)}</span></div>
+${LB('Когда удобно')}
+<div data-radio style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+<button class="opt on" style="margin:0;display:block;text-align:center;padding:9px 4px"><span class="b s" style="display:block">Сегодня</span><span class="xs mut">после 18:00</span></button>
+<button class="opt" style="margin:0;display:block;text-align:center;padding:9px 4px"><span class="b s" style="display:block">Завтра</span><span class="xs mut">весь день</span></button>
+<button class="opt" style="margin:0;display:block;text-align:center;padding:9px 4px"><span class="b s" style="display:block">Другое</span><span class="xs mut">выбрать</span></button></div>
+<div class="card f flex mt">${I('lock',16)}<span class="xs mut">Номер квартиры и телефон Ерлан увидит, только когда примет заявку.</span></div>`,
+foot:BT('Отправить заявку','p','status')})};
+
+S['status']={n:'Статус заявки',h:()=>SCR({nav:NAV('Заявка: розетка'),body:`
+<div class="card m flex">${AV('ЕК','pe',40)}<div><div class="xs g b">Мастер едет</div><div class="h2">Сегодня в 19:30</div></div></div>
+<div class="mt3">${TS('done','Заявка отправлена','18:02')}${TS('done','Ерлан принял заявку','18:20',`<div class="bub mt2">Приду в 19:30, возьму розетку с заземлением. Выезд и замена [ЦЕНА] ₸</div>`)}${TS('','Работа выполнена','Подтвердите после визита')}${TS('','Отзыв для соседей')}</div>`,
+foot:BT('Работа выполнена','p','review')+`<div class="two">${BT('Написать','o sm')}${BT('Отменить','d sm')}</div>`})};
+
+S['review']={n:'Отзыв',h:()=>SCR({nav:NAV('',{x:1}),body:`
+<div class="flex top-a">${AV('ЕК','pe',48)}<h1 class="h1" style="margin:0">Как Ерлан справился с розеткой?</h1></div>
+<div data-radio class="two mt3">
+<button class="opt on" style="margin:0;display:grid;justify-items:center;gap:4px;padding:12px">${I('like',22)}<span class="b s">Рекомендую</span></button>
+<button class="opt" style="margin:0;display:grid;justify-items:center;gap:4px;padding:12px">${I('dislike',22)}<span class="b s">Не рекомендую</span></button></div>
+${LB('Что понравилось')}${CH(['Пришёл вовремя','Цена как договорились','Убрал за собой','Объяснил, что сделал'],[0,1],{multi:1})}
+${LB('Пара слов для соседей')}<div class="inp ta hint">Необязательно</div>
+<p class="xs mut3 mt2">Соседи увидят отзыв как «Камила, 1 подъезд». Номер квартиры не показываем.</p>`,
+foot:BT('Опубликовать отзыв','p','masters')})};
+
+/* --- 6. Отдать вещь и поднять объявление --- */
+const TC=(ic,c,t,d,go,sel)=>`<button class="tc${sel?' sel':''}" data-go="${go}">${TL(ic,c,34)}<span class="b s">${t}</span><span class="xs mut">${d}</span></button>`;
+S['templates']={n:'Шаблоны первого поста',h:()=>SCR({nav:LTH('Добавьте объявление','Что хотите сделать?','',1),body:`
+<p class="sub mt">Выберите, и мы подскажем, что написать</p>
+<div class="tg mt">
+${TC('gift','m','Отдам даром','Вещи, мебель, детское','giveaway')}${TC('tag','m','Продам','Покупатель в соседнем подъезде','giveaway')}
+${TC('wrench','m','Ищу мастера','Соседи посоветуют проверенного','masters',1)}${TC('ask','m','Вопрос соседям','Кто знает, где, когда','home')}
+${TC('search','wa','Потерял, нашёл','Ключи, питомцы, посылки','giveaway')}${TC('chart','m','Опрос','Узнать мнение подъезда','poll-create')}</div>
+<div class="card f mt xs mut">Пост увидят 98 соседей Abay130. Номер телефона скрыт, пока вы сами его не покажете.</div>`,tab:1})};
+
+S['giveaway']={n:'Пост «Отдам даром»',h:()=>SCR({nav:NAV('Отдам даром'),body:`
+<div class="flex" style="gap:8px">${PHW(64,'stroller',64,'sa','фото 1')}${PHW(64,'stroller',64,'pe','фото 2')}<span class="ph" style="width:64px;height:64px;border:1.5px dashed var(--line-2);background:none">${I('plus',20)}</span></div>
+${LB('Что отдаёте')}<div class="inp">Детская коляска 2 в 1</div>
+${LB('Пара слов')}<div class="inp ta">Катали одного ребёнка, колёса целые, есть дождевик</div>
+<div class="chips mt2"><span class="chip dash">+ состояние</span><span class="chip dash">+ размер</span></div>
+${LB('Когда забрать')}${CH(['Вечером','Выходные','Договоримся'],0)}
+${LB('Кому показать')}${SEG(['Мой подъезд','Весь ЖК'],1)}`,
+foot:BT('Опубликовать','p','bump')})};
+
+S['bump']={n:'Поднять объявление',h:()=>`<div class="scr">${SB().replace('class="sb"','class="sb" style="background:var(--scrim);color:var(--on-deep)"')}
+<div class="scrim"><span class="tile" style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.2)">${I('check',24,2.4)}</span><div class="h2">Объявление опубликовано</div><div class="xs" style="opacity:.75">Его уже видят соседи Abay130</div></div>
+<div class="sheet"><div class="handle"></div><div class="h2">Поднять объявление</div><p class="xs mut">Оно будет первым в ленте и барахолке, и его заметят быстрее.</p>
+<div data-radio>${OPT('Бесплатно','Позовите одного соседа в приложение','1 день',1)}${OPT('На 1 день','Первое место в ленте','[ЦЕНА] ₸')}${OPT('На 3 дня','Первое место и пуш соседям подъезда','[ЦЕНА] ₸')}</div>
+<div class="mt">${BT('Позвать соседа','p','invite')}</div>${BT('Не сейчас','g','my-listing')}</div></div>`};
+
+S['invite']={n:'Позвать соседей',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Позовите соседей</h1>
+<div class="card m mt"><div class="flex between"><span class="b s" style="color:var(--primary-strong)">1 подъезд в приложении</span><span class="h1" style="margin:0;color:var(--primary-strong)">34%</span></div>
+<div class="mt2">${PR(34,50)}</div><p class="xs mut mt">При 50% квартир откроем групповые скидки: мойка окон, чистка кондиционеров. Осталось 11 квартир.</p></div>
+<div class="card mt2 flex">${TL('up','wa',34)}<span class="s">За каждого соседа, который присоединится, одно поднятие объявления бесплатно</span></div>
+${LB('Ваши приглашения')}
+<button class="row plain wfull" data-go="joined"><span class="flex">${AV('ЖМ','pe',30)}Жанна, кв. 12</span><span class="xs g b">Присоединилась</span></button>
+<div class="row plain" style="border:0"><span class="flex">${AV('+7','gr',30)}+7 701 *** 45 10</span><span class="xs mut">Ссылка отправлена</span></div>`,
+foot:BT('Отправить ссылку','p','joined','share')+BT('Показать QR-код соседу','o','','qr')})};
+
+S['joined']={n:'Сосед присоединился',h:()=>SCR({nav:'<div style="height:16px"></div>',body:`
+<div class="flex" style="gap:0">${AV('ЖМ','pe',54)}<span class="av" style="--s:54px;background:var(--primary);color:var(--on-primary);margin-left:-10px;box-shadow:0 0 0 3px var(--surface)">${I('check',24,2.6)}</span></div>
+<h1 class="h1 mt">Жанна из кв. 12 теперь здесь</h1>
+<p class="sub">Она подтвердила адрес по вашей ссылке. Спасибо, что зовёте соседей.</p>
+<div class="card sel mt3 flex">${TL('up','m',36)}<div><div class="b">+1 бесплатное поднятие</div><div class="xs mut">Действует 30 дней</div></div></div>
+<div class="card f mt2"><div class="flex between s"><b>1 подъезд в приложении</b><b>34% → 36%</b></div><div class="mt2">${PR(36,50)}</div><p class="xs mut mt2">До групповых скидок осталось 10 квартир</p></div>`,
+foot:BT('Поднять «Детскую коляску»','p','my-listing')+BT('Позвать ещё соседей','g','invite')})};
+
+S['my-listing']={n:'Поднято, отклики',h:()=>SCR({nav:NAV('Моё объявление'),body:`
+<div class="flex">${PHW(52,'stroller',52,'pe')}<div><div class="b">Детская коляска 2 в 1</div><div class="xs g b">Отдам даром</div></div></div>
+<div class="card m mt flex top-a">${I('up',18)}<span class="xs"><b>Поднято бесплатно</b> за приглашение Жанны. Первое в ленте до пт, 18:00</span></div>
+<div class="stats mt2">${STAT('46','просмотров')}${STAT('3','написали')}${STAT('5','в избранном')}</div>
+${LB('Кто хочет забрать')}
+<div class="row plain"><span class="flex top-a">${AV('АС','pe',32)}<span><b class="s" style="display:block">Асель, 2 подъезд</b><span class="xs mut">Можно забрать сегодня в 19:00?</span></span></span><span class="xs mut3">5 мин</span></div>
+<div class="row plain" style="border:0"><span class="flex top-a">${AV('МТ','mi',32)}<span><b class="s" style="display:block">Мадина, 5 подъезд</b><span class="xs mut">Если не заберут, я в очереди</span></span></span><span class="xs mut3">12 мин</span></div>`,
+foot:BT('Отдано, снять с публикации','p','home')+BT('Изменить объявление','g','giveaway')})};
+
+/* --- 7. Опрос соседей --- */
+S['poll-create']={n:'Создание опроса',h:()=>SCR({nav:NAV('Опрос соседей',{x:1}),body:`
+${LB('Вопрос','first')}<div class="inp">Ставим лавочки у второго подъезда?</div>
+${LB('Варианты')}<div class="inp">Да, две у входа</div><div class="inp mt2">Нет, будет шумно</div>
+<button class="inp mt2 wfull g s center" style="border-style:dashed">+ Добавить вариант</button>
+${LB('Кто голосует')}${SEG(['Мой подъезд','Весь ЖК'],0)}
+<div class="row plain mt">Завершить через<span class="flex" style="gap:2px">3 дня ${I('fwd',16)}</span></div>
+<div class="card f flex top-a mt3">${I('info',16)}<span class="xs mut">Это опрос мнений. Решения по дому принимает ОСИ на официальном голосовании.</span></div>`,
+foot:BT('Опубликовать опрос','p','poll-results')})};
+
+S['poll-results']={n:'Итоги опроса',h:()=>SCR({nav:NAV(),body:`
+<div class="badges">${BD('Опрос завершён')}${BD('2 подъезд')}</div>
+<h1 class="h1 mt2">Ставим лавочки у второго подъезда?</h1>
+${PO('Да, две у входа',68,1)}${PO('Нет, будет шумно',32,0,1)}
+<div class="stats two mt">${STAT('41 из 60','квартир проголосовали')}${STAT('9','комментариев')}</div>
+<div class="card mt"><div class="b s">Самый поддержанный комментарий</div><p class="s mt2">«Только не прямо под окнами первого этажа, лучше у детской площадки»</p><p class="xs mut3 mt2">Ержан, 2 подъезд, 14 соседей согласны</p></div>`,
+foot:`<p class="fine">ОСИ получит итог, число голосов и комментарии. Ответ председателя появится здесь.</p>${BT('Передать итоги в ОСИ','p','osi-vote')}`})};
+
+/* --- Пустые состояния --- */
+S['chats-empty']={n:'Чаты: пусто',h:()=>SCR({nav:LTH('21 октября, 2026','Чаты',`<span style="color:var(--on-primary)">${I('listic',24)}</span>`),bcls:'flush',body:`
+<div class="flex" style="padding:14px var(--pad);border-bottom:1px solid var(--line)">${AV('1','am',42)}<div class="grow"><div class="b s">Чат 1 подъезда</div><div class="xs mut">12 соседей. Вы ещё не писали</div></div><button class="btn p sm auto" data-go="chat-summary">Привет</button></div>
+<div class="center" style="padding:90px 30px 0"><span class="tile f" style="width:64px;height:64px;border-radius:50%;margin:0 auto">${I('chat',28)}</span>
+<div class="h3 mt">Личных сообщений пока нет</div><p class="xs mut mt2">Они появятся, когда вы напишете продавцу, мастеру или соседу по номеру машины.</p>
+<div class="mt">${BT('Найти мастера','g','masters')}</div></div>`,tab:2})};
+
+S['flea-empty']={n:'Барахолка: пусто',h:()=>SCR({nav:HOMEHDR(),body:`
+${SEG(['Лента ЖК','Барахолка'],1,'ac')}
+<div class="center mt3"><div class="h3">В барахолке пока тихо</div><p class="xs mut mt2">Первое объявление увидят все 98 соседей, а продать или отдать вещь соседу проще всего.</p></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" class="mt">
+<button class="card center" data-go="giveaway" style="padding:10px 4px">${I('gift',18).replace('class="i"','class="i" style="margin:0 auto"')}<span class="b xs">Отдам</span></button>
+<button class="card center" data-go="giveaway" style="padding:10px 4px">${I('tag',18).replace('class="i"','class="i" style="margin:0 auto"')}<span class="b xs">Продам</span></button>
+<button class="card center" data-go="templates" style="padding:10px 4px">${I('search',18).replace('class="i"','class="i" style="margin:0 auto"')}<span class="b xs">Ищу</span></button></div>
+${LB('Соседи, которые что-то делают')}
+<button class="card f flex" data-go="business">${TL('cake','pe',36)}<span><b class="s" style="display:block">Домашняя выпечка на заказ</b><span class="xs mut">Асель, 2 подъезд</span></span></button>
+<button class="card f flex mt2">${TL('book','m',36)}<span><b class="s" style="display:block">Английский для школьников</b><span class="xs mut">Марат, 5 подъезд</span></span></button>`,tab:0})};
+
+
+/* ===== Часть 2 в визуале части 1 ===== */
+const STORY=(lbl,inner,bg,go,seen)=>`<button class="story${seen?' seen':''}" ${go?`data-go="${go}"`:''}><span class="ring"><span style="background:${bg}">${inner}</span></span><span>${lbl}</span></button>`;
+S['home2']={n:'Главная 2.0',h:()=>SCR({nav:`<div class="hdr" style="align-items:flex-end"><div><button class="xs g b flex" style="gap:6px">${LOGO(18)}Abay130, 1 подъезд ${I('down',14)}</button><div class="h1" style="margin:2px 0 0">Доброе утро</div></div>${AV('КА','pe',38)}</div>`,body:`
+<div class="stories">
+${STORY('Новости',`<b class="xs" style="color:var(--on-deep)">ОСИ</b>`,'var(--deep)','story')}
+${STORY('Даром',`<span style="color:var(--warm)">${I('gift',22)}</span>`,'var(--peach-soft)','flea-grid')}
+${STORY('Мастер дня',`<span style="color:var(--primary)">${I('star',22)}</span>`,'var(--primary-soft)','master')}
+${STORY('Двор',`<span style="color:var(--text-2)">${I('tree',22)}</span>`,'var(--surface-2)','',1)}
+${STORY('События',`<span style="color:var(--text-2)">${I('calendar',22)}</span>`,'var(--surface-2)','season',1)}</div>
+<button class="card wa mt" data-go="outage" style="text-align:left"><span class="xs w b">Горячая вода</span><span class="flex between top-a"><span class="h1" style="margin:2px 0;font-size:21px">Отключат через 26 ч</span></span><span class="flex between"><span class="xs mut">Чт, 10:00–18:00</span><span class="btn wm sm auto" style="padding:0 12px">${I('bell',15)}Напомнить</span></span></button>
+<div class="two mt2">
+<button class="card dp" data-go="car-search" style="text-align:left;min-height:118px;display:grid;align-content:space-between">${I('car',22)}<span><b style="display:block;font-size:16px;line-height:1.2">Кто перекрыл?</b><span class="xs mut">Найти по номеру</span></span></button>
+<button class="card" data-go="group-buy" style="text-align:left;display:grid;align-content:space-between"><span><b style="font-size:20px">18</b><span class="mut3 s">/25</span></span><span><b class="s" style="display:block;line-height:1.25">Мойка окон всем подъездом</b><span class="mt2" style="display:block">${PR(72)}</span></span></button></div>
+<button class="card mt2 flex" data-go="chat-summary">${TL('spark','m',36)}<span class="grow"><b class="s" style="display:block">Чат подъезда: 47 новых</b><span class="xs mut">Главное за 30 секунд: лифт, кот, посылки</span></span>${I('fwd',18)}</button>`,tab:0})};
+
+S['story']={n:'Сторис ОСИ',h:()=>SCR({cls:'dk',nav:`<div style="padding:4px 14px 0"><div class="segs"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+<div class="flex between mt"><span class="flex">${AV('ОСИ','',34).replace('class="av "','class="av" style="--s:34px;background:var(--on-deep);color:var(--deep)"')}<span><b class="s" style="display:block">ОСИ Abay130</b><span class="xs mut">2 часа назад, официально</span></span></span><button class="nb" data-go="home2" aria-label="Закрыть">${I('close',22)}</button></div></div>`,body:`
+<div style="padding-top:90px">${BD('2 подъезд','wa')}
+<div style="font-size:34px;font-weight:700;line-height:1.08;letter-spacing:-.02em;margin-top:12px">Лифт остановят на ремонт</div>
+<div class="h3 mt" style="font-size:16px">Пятница, 25 октября, с 9:00 до 15:00</div>
+<p class="s mut mt">Меняем трос и тормозную систему. Грузовой лифт 1 подъезда работает как обычно.</p></div>`,
+foot:`<div class="flex" style="gap:6px;flex-wrap:wrap"><button class="chip" style="background:var(--on-deep);color:var(--deep);border:0;font-weight:600">Понятно, 124</button><button class="chip" style="background:none;color:var(--on-deep);border-color:rgba(255,255,255,.4)">В календарь</button><button class="chip" style="background:none;color:var(--on-deep);border-color:rgba(255,255,255,.4)">Поделиться</button></div>
+<div class="flex"><span class="grow" style="height:42px;border-radius:21px;border:1px solid rgba(255,255,255,.35);padding:0 14px;display:flex;align-items:center;font-size:13px;opacity:.75">Задать вопрос ОСИ</span><button class="av" style="--s:42px;background:var(--on-deep);color:var(--deep)" aria-label="Отправить">${I('send',18)}</button></div>`})};
+
+S['lock']={n:'Экран блокировки',h:()=>SCR({cls:'night',body:`
+<div class="center" style="padding-top:22px"><div class="s mut">Четверг, 24 октября</div><div style="font-size:72px;font-weight:700;line-height:1;letter-spacing:-.03em">8:24</div>
+<div class="flex mt" style="justify-content:center;gap:8px"><div class="donut" style="--p:36"><span>36%<small>подъезд</small></span></div><div class="nc" style="text-align:left;padding:8px 12px"><div class="xs mut">Горячая вода</div><div class="b s">Нет до 18:00</div></div></div></div>
+<div style="margin-top:120px" class="nc"><div class="flex between xs mut"><span class="flex" style="gap:6px">${I('car',14)}Кто перекрыл авто, 777 KZA 02</span><span>сейчас</span></div>
+<div class="flex between mt2 top-a"><div><div class="h3" style="font-size:17px">Сосед идёт к машине</div><div class="xs mut">Прочитал 1 мин назад</div></div><div style="font-size:26px;font-weight:700;color:var(--mint);white-space:nowrap">~2 мин</div></div>
+<div class="mt">${PR(66,0,'lt')}</div><div class="flex between mt2" style="font-size:10px"><span class="mut">Отправлено</span><span class="mut">Прочитано</span><b>Идёт</b><span class="mut">Свободно</span></div></div>
+<button class="nc flex mt2 wfull" data-go="notifications" style="text-align:left">${TL('home','m',34)}<span class="grow"><span class="flex between"><b class="s">Тредо Соседи</b><span class="xs mut">8:10</span></span><span class="xs" style="display:block">Дана ответила на ваш вопрос про электрика</span></span></button>`})};
+
+S['chat-summary']={n:'Чат с пересказом',h:()=>SCR({nav:NAV(`<span class="flex" style="gap:8px">${AV('1','am',32)}<span style="text-align:left"><b class="s" style="display:block">1 подъезд</b><span class="xs mut" style="font-weight:400">38 соседей, 6 онлайн</span></span></span>`,{l:1}),body:`
+<div class="card m"><div class="flex between"><span class="flex b s" style="gap:6px">${I('spark',16)}Пока вас не было: 47 сообщений</span>${I('close',16)}</div>
+<ul class="xs mt2" style="padding-left:16px;line-height:1.55"><li><b>Лифт</b> починят в пятницу, ОСИ подтвердило</li><li><b>Рыжий кот</b> с 5 этажа нашёлся, хозяйка забрала</li><li><b>Посылки</b> принимают кв. 31 и 40, если вас нет дома</li></ul></div>
+<div class="flex top-a mt">${AV('ЕС','mi',28)}<div><div class="xs g b">Ержан, кв. 22</div><div class="bub mt2" style="margin-top:2px">Кто-то оставил самокат у мусоропровода на 4 этаже, чей?</div><div class="flex xs mut mt2" style="gap:10px"><span class="flex" style="gap:3px">${I('like',13)}5</span><span class="g b">3 ответа</span></div></div></div>
+<div style="text-align:right" class="mt"><span class="bub me" style="text-align:left">Мой, сейчас уберу, извините</span></div>
+<div class="flex top-a mt">${AV('АМ','pe',28)}<div class="bub" style="max-width:220px"><div class="xs g b">Анель, кв. 9, опрос</div><div class="b s mt2">Ставим камеру в лифт?</div><div class="two mt2" data-radio><button class="opt on" style="margin:0;padding:6px;justify-content:center"><b class="xs">Да, 21</b></button><button class="opt" style="margin:0;padding:6px;justify-content:center"><b class="xs">Нет, 4</b></button></div></div></div>`,
+foot:`<div class="chips scroll"><button class="chip" data-go="car-search">/перекрыли</button><button class="chip" data-go="poll-create">/опрос</button><button class="chip" data-go="giveaway">/отдам</button><button class="chip" data-go="masters">/мастер</button></div>
+<div class="flex"><span class="grow search">Сообщение соседям</span><button class="av" style="--s:40px;background:var(--primary);color:var(--on-primary)" aria-label="Голосовое">${I('mic',18)}</button></div>`})};
+
+const FI=(ic,c,h,t,m,tag)=>`<button>${PH(ic,h,c,'',tag)}<b class="s" style="display:block;margin-top:6px;line-height:1.25">${t}</b><span class="xs mut">${m}</span></button>`;
+S['flea-grid']={n:'Барахолка плиткой',h:()=>SCR({nav:LTH('Abay130, 98 соседей','Барахолка'),body:`
+<div class="mt"></div>
+<div class="search">${I('search',18)}Коляска, стол, велосипед</div>
+<div class="mt">${CH(['Даром','Забрать сегодня','Детское','Аренда'],0,{row:1})}</div>
+<div class="mason mt">
+${FI('stroller','sa',150,'Детская коляска 2 в 1','1 подъезд, 5 мин',BD('Даром','wa'))}
+${FI('book','mi',104,'Учебники 3 класс, комплект','2 подъезд, 20 мин',BD('Даром','wa'))}
+${FI('sofa','sa',104,'Тумба под ТВ','[ЦЕНА] ₸, 3 подъезд')}
+${FI('bike','f',140,'Детский велосипед','4 подъезд',BD('Аренда на день'))}</div>`,tab:0,extra:`<button class="fab" data-go="templates">${I('plus',18)}Отдать или продать</button>`})};
+
+S['group-buy']={n:'Совместная покупка',h:()=>SCR({cls:'',bcls:'flush',nav:'',body:`
+<div style="background:var(--deep);color:var(--on-deep);padding:6px var(--pad) 20px">
+<button class="flex xs b" data-go="@back" style="gap:4px;opacity:.85">${I('back',16)}Вместе дешевле, до 30 октября</button>
+<div class="h1 mt" style="color:var(--on-deep)">Мойка окон всем подъездом</div>
+<p class="xs" style="opacity:.75">Снаружи и изнутри, бригада на верёвках. Подрядчик проверен ОСИ.</p>
+<div class="flex mt" style="align-items:baseline;gap:6px"><b style="font-size:34px">18</b><span class="s" style="opacity:.8">из 25 квартир уже с нами</span></div></div>
+<div style="padding:16px var(--pad)">
+<div class="b s">Чем больше квартир, тем дешевле всем</div>
+<div class="mt">${PR(72,40)}</div>
+<div data-radio style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" class="mt">
+<button class="opt" style="margin:0;display:block;padding:8px"><span class="xs mut" style="display:block">1 квартира</span><s class="b s mut3">[ЦЕНА]</s></button>
+<button class="opt on" style="margin:0;display:block;padding:8px"><span class="xs g b" style="display:block">от 10 квартир</span><b class="s">[ЦЕНА] ₸</b><span class="xs mut" style="display:block">сейчас</span></button>
+<button class="opt" style="margin:0;display:block;padding:8px"><span class="xs mut" style="display:block">от 25 квартир</span><b class="s">[ЦЕНА] ₸</b><span class="xs mut" style="display:block">ещё 7</span></button></div>
+<div class="flex mt"><div class="avs">${AV('ДА','pe',26)}${AV('ЕС','mi',26)}${AV('АМ','am',26)}</div><span class="xs mut">Дана, Ержан, Анель и ещё 15 соседей</span></div>
+<div class="card f flex top-a mt">${I('lock',16)}<span class="xs mut">Деньги спишутся, только если наберётся 10 квартир. Каждый платит по итоговой цене.</span></div></div>`,
+foot:BT('Присоединиться','p','home2')+BT('Позвать соседа, чтобы снизить цену','g','invite')})};
+
+S['trust']={n:'Уровень доверия',h:()=>SCR({nav:`<div class="nav"><span></span><span></span><button class="nb mut" aria-label="Настройки">${I('gear',24)}</button></div>`,body:`
+<div class="center"><span style="display:inline-block;padding:3px;border-radius:50%;background:conic-gradient(var(--primary) 60%,var(--line) 0)"><span style="display:block;padding:2px;border-radius:50%;background:var(--surface)">${AV('КА','pe',70)}</span></span>
+<div class="flex mt2" style="justify-content:center;gap:8px"><span class="h2">Камила</span>${I('pen',20)}</div><div class="s mut">1 подъезд, с октября</div><div class="mt2">${BD('Надёжный сосед, 3 из 5','dp')}</div></div>
+<div class="stats mt">${STAT('12','раз помогла')}${STAT('4','вещи отдала')}${STAT('3','соседа позвала')}</div>
+<div class="card mt"><div class="b s">До уровня 4 «Опора подъезда»</div>
+<div class="flex mt s">${CK(1)}Адрес подтверждён</div><div class="flex mt2 s">${CK(1)}Номер авто добавлен</div>
+<div class="flex mt2 s">${CK(0)}<span class="grow">Ответить на 3 вопроса соседей</span><b class="xs">1/3</b></div><div class="flex mt2 s">${CK(0)}Принять посылку для соседа</div>
+<p class="xs mut mt">На уровне 4 ваши объявления показываются с отметкой «Опора подъезда», а поднятие стоит дешевле.</p></div>
+<button class="card mt2 flex"><span class="grow"><b class="s" style="display:block">Что видят соседи</b><span class="xs mut">Имя и подъезд, без квартиры и телефона</span></span>${I('fwd',18)}</button>
+<button class="card mt2 flex" data-go="passport"><span class="grow"><b class="s" style="display:block">Квартира 34</b><span class="xs mut">Счётчики, гарантии, свои мастера</span></span>${I('fwd',18)}</button>`,tab:3})};
+
+/* --- Релиз 1–2: услуги соседей и монетизация --- */
+S['help']={n:'Помощь соседей',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Помощь от соседей</h1><p class="sub">Мелкие дела за небольшие деньги. Делают соседи, в том числе подростки с согласия родителей.</p>
+<div data-radio style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" class="mt">
+<button class="opt on" style="margin:0;display:grid;justify-items:center;gap:4px;padding:10px 4px;text-align:center">${I('trash',20)}<b class="xs">Вынести мусор</b></button>
+<button class="opt" style="margin:0;display:grid;justify-items:center;gap:4px;padding:10px 4px;text-align:center">${I('paw',20)}<b class="xs">Выгулять собаку</b></button>
+<button class="opt" style="margin:0;display:grid;justify-items:center;gap:4px;padding:10px 4px;text-align:center">${I('bag',20)}<b class="xs">Принести покупки</b></button></div>
+<div class="card mt rows" style="padding-top:2px;padding-bottom:2px">${RW('Когда','Сегодня, 20:00–21:00')}${RW('Откуда','Кв. 34, пакет у двери')}${RW('Вознаграждение','[ЦЕНА] ₸')}</div>
+${LB('Готовы помочь сегодня')}
+<div class="card flex">${AV('ТБ','am',36)}<span><b class="s" style="display:block">Тимур, 15 лет</b><span class="xs mut">2 подъезд, 38 задач, согласие родителей есть</span></span></div>
+<div class="card flex mt2">${AV('АЖ','mi',36)}<span><b class="s" style="display:block">Алия, студентка</b><span class="xs mut">4 подъезд, 12 задач</span></span></div>`,
+foot:BT('Опубликовать задачу','p','task-done')})};
+
+S['task-done']={n:'Задача выполнена',h:()=>SCR({nav:NAV(),body:`
+${BD('Выполнено в 20:07','m')}
+<h1 class="h1 mt2">Тимур вынес мусор</h1>
+<div class="mt">${PH('camera',170,'sa','Фото у контейнера, 20:07')}</div>
+<div class="card mt">${RW('Вознаграждение','[ЦЕНА] ₸','plain').replace('class="row plain"','class="row plain" style="padding-top:0"')}<div class="lbl" style="margin-top:10px">Чаевые</div>${SEG(['Без','10%','15%','Своя'],1)}</div>
+<div class="card mt2 flex"><span class="grow"><b class="s" style="display:block">Каждый вечер с Тимуром</b><span class="xs mut">Подписка, отменить можно в любой день</span></span>${CK(0)}</div>`,
+foot:BT('Оплатить картой •• 4421','p','home','card')})};
+
+S['business']={n:'Бизнес соседа',h:()=>SCR({bcls:'flush',nav:'',body:`
+<div style="background:var(--peach);height:150px;position:relative;display:grid;place-items:center;color:var(--av-ink)"><button class="nb" data-go="@back" style="position:absolute;left:12px;top:8px;background:var(--surface);color:var(--text);border-radius:50%" aria-label="Назад">${I('back',20)}</button>${I('cake',48,1.5)}</div>
+<div style="padding:0 var(--pad) 16px"><div class="card" style="margin-top:-26px;position:relative"><div class="flex between top-a"><div class="h2">Домашняя выпечка Асель</div>${BD('Бизнес соседа')}</div>
+<div class="badges mt2">${BD('2 подъезд, кв. скрыта','m')}${BD('Заказывали 31 сосед')}${BD('Самовывоз у подъезда')}</div></div>
+${LB('Можно заказать к пятнице')}
+<div class="two"><div>${PH('cake',90,'pe')}<b class="s" style="display:block;margin-top:6px">Медовик, 1 кг</b><span class="xs mut">[ЦЕНА] ₸</span></div><div>${PH('cake',90,'sa')}<b class="s" style="display:block;margin-top:6px">Баурсаки, 30 шт</b><span class="xs mut">[ЦЕНА] ₸</span></div></div>
+<div class="card f mt"><p class="s">«Заказываем на все дни рождения, всегда свежее и забирать в тапочках»</p><p class="xs mut3 mt2">Дана, 3 подъезд</p></div></div>`,
+foot:`<div class="flex between"><span class="flex">${AV('АС','pe',40)}<span><b class="s" style="display:block">Асель</b><span class="xs mut flex" style="gap:2px">Другие объявления ${I('fwd',12)}</span></span></span><span class="flex" style="gap:10px"><button class="rfab g" aria-label="Написать">${I('chat',20)}</button><button class="rfab o" aria-label="Заказать">${I('bag',20)}</button></span></div>`})};
+
+S['digest']={n:'Дайджест недели',h:()=>SCR({nav:NAV('<span class="xs mut b">Понедельник, 28 октября</span>',{l:1}),body:`
+<h1 class="h1 xl">Неделя в Abay130</h1>
+<div class="stats two mt">${STAT('+6','новых соседей','dp')}${STAT('9','вещей отдали даром','wa')}</div>
+<div class="card mt2"><div class="b s">На этой неделе</div>
+<div class="flex top-a mt s"><b class="w" style="width:24px">Ср</b><span>Нет холодной воды, 3 подъезд, 10–14</span></div>
+<div class="flex top-a mt2 s"><b class="g" style="width:24px">Пт</b><span>Лифт 2 подъезда на ремонте, 9–15</span></div>
+<div class="flex top-a mt2 s"><b class="g" style="width:24px">Сб</b><span>Субботник во дворе, 11:00</span></div></div>
+<button class="card mt2" data-go="chat-summary" style="text-align:left"><span class="xs mut">Самое обсуждаемое</span><b style="display:block" class="mt2">Ставим камеру в лифт? 21 за, 4 против</b></button>
+<div class="card dash mt2 flex top-a"><span class="tile f" style="width:40px;height:40px;font-size:9px;font-weight:700">ЛОГО</span><span><span class="xs mut" style="display:block">Партнёр недели</span><b class="s">[ПАРТНЁР] открылся у шлагбаума: [ПРЕДЛОЖЕНИЕ] для жителей</b></span></div>`,
+foot:BT('Открыть ленту дома','p','home')})};
+
+/* --- До года: ОСИ в приложении --- */
+S['osi-request']={n:'Заявка в ОСИ',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Что случилось?</h1>
+<div class="mt">${CH(['Протечка','Лифт','Свет в подъезде','Уборка','Двор'],0)}</div>
+<div class="card wa mt"><div class="xs w b">Похоже, об этом уже сообщили</div><div class="b mt2">Течёт с потолка у лифта, 5 этаж, 1 подъезд</div><div class="xs mut">Заявка №0412, в работе, ещё 3 соседа</div><div class="mt">${BT('Это то же самое, присоединиться','wm sm','osi-done')}</div></div>
+${LB('Или опишите новую проблему')}
+<div class="card rows" style="padding-top:2px;padding-bottom:2px">${RW('Где','Моя квартира, ванная')}<div style="padding:10px 0"><div class="xs mut">Подробности</div><div class="s mut3 mt2">Например: капает с трубы стояка</div></div></div>
+<button class="ph mt2" style="width:52px;height:52px;border:1px solid var(--line)" aria-label="Добавить фото">${I('camera',20)}</button>`,
+foot:BT('Отправить в ОСИ','p','osi-done')})};
+
+S['osi-done']={n:'Заявка выполнена',h:()=>SCR({nav:NAV('<span class="xs mut b">Заявка №0412</span>',{l:1}),body:`
+${BD('Выполнена за 1 день 3 часа','m')}
+<h1 class="h1 mt2">Протечка у лифта, 5 этаж</h1>
+<div class="card mt">${TS('done','Принята ОСИ','Чт 09:12, с вами ещё 3 соседа')}${TS('done','Назначен сантехник ОСИ','Чт 10:40, Болат, придёт в пт 10–12')}${TS('done','Заменён участок стояка','Пт 11:40, фото отчёта')}${TS('cur','Проблема решена?','Ваш ответ увидит председатель ОСИ')}</div>`,
+foot:`<div class="two">${BT('Да, сухо','p','home')}${BT('Ещё течёт','o','osi-request')}</div><p class="fine">Если «ещё течёт», заявка вернётся в работу с пометкой «повторно»</p>`})};
+
+S['osi-fee']={n:'Взнос ОСИ',h:()=>SCR({nav:NAV(),body:`
+<div class="xs mut b">Взнос ОСИ за ноябрь, кв. 34</div>
+<div class="h1 xl" style="font-size:34px">[СУММА] ₸</div><div class="xs mut">Оплатить до 10 ноября</div>
+<div class="card mt"><div class="b s">Из чего складывается</div>
+<div class="bar mt"><i style="flex:40;background:var(--deep)"></i><i style="flex:30;background:var(--primary)"></i><i style="flex:18;background:var(--peach)"></i><i style="flex:12;background:var(--line-2)"></i></div>
+<div class="rows mt2">${RW('<span class="lg" style="background:var(--deep)"></span>Содержание дома','[СУММА] ₸','plain')}${RW('<span class="lg" style="background:var(--primary)"></span>Фонд капремонта','[СУММА] ₸','plain')}${RW('<span class="lg" style="background:var(--peach)"></span>Уборка и вывоз','[СУММА] ₸','plain')}${RW('<span class="lg" style="background:var(--line-2)"></span>Охрана','[СУММА] ₸','plain')}</div>
+<button class="xs g b mt2">Отчёт ОСИ: на что ушли деньги в октябре</button></div>
+<div class="card mt2">${RW('Карта •• 4421','<span class="g b">Сменить</span>','plain')}<div class="flex between s" style="padding-top:10px"><span>Платить автоматически 5-го числа</span>${CK(1)}</div></div>`,
+foot:BT('Оплатить [СУММА] ₸','p','osi-paid')})};
+
+S['osi-paid']={n:'Взнос оплачен',h:()=>SCR({cls:'dk',nav:'<div style="height:16px"></div>',body:`
+<span class="av" style="--s:56px;background:var(--on-deep);color:var(--deep)">${I('check',26,2.6)}</span>
+<h1 class="h1 xl mt">Ноябрь оплачен</h1><div class="xs mut">[СУММА] ₸, карта •• 4421, 4 ноября</div>
+<div class="card mt3"><div class="flex between"><b class="s">1 подъезд уже оплатил</b><b style="font-size:22px">78%</b></div><div class="mt2">${PR(78,0,'lt')}</div><p class="xs mut mt2">Ваш подъезд второй по оплате в ЖК. Лидирует 3 подъезд, 84%.</p></div>
+<div class="card mt2 flex top-a">${I('refresh',18)}<span class="xs">Автоплатёж включён. Следующий раз спишем 5 декабря и пришлём уведомление за день.</span></div>`,
+foot:BT('Скачать квитанцию','lt','','doc')+BT('Готово','gl','home')})};
+
+S['osi-vote']={n:'Голосование ОСИ',h:()=>SCR({nav:NAV(),body:`
+<div class="badges">${BD('Официально, ОСИ','dp')}${BD('До 15 ноября','wa')}</div>
+<h1 class="h1 mt2">Заменить лифты во 2 подъезде за счёт фонда капремонта</h1>
+<div class="card mt"><div class="flex between s"><b>Кворум</b><b>52% из нужных 50%</b></div><div class="mt2">${PR(52,50)}</div><p class="xs mut mt2">Голос считается по площади квартиры: у вас 68 м²</p></div>
+<div class="card mt2 rows" style="padding-top:2px;padding-bottom:2px">${RW('Смета, PDF','<span class="g b">Открыть</span>','plain')}${RW('3 предложения подрядчиков','<span class="g b">Сравнить</span>','plain')}</div>
+${LB('Ваш голос')}${SEG(['За','Против','Воздержусь'],0)}`,
+foot:`<p class="fine">Голос юридически значимый: подтвердим кодом из SMS и внесём в протокол</p>${BT('Проголосовать «За»','p','osi-decision')}`})};
+
+S['osi-decision']={n:'Решение принято',h:()=>SCR({nav:NAV(),body:`
+${BD('Решение принято, 15 ноября','m')}
+<h1 class="h1 mt2">Лифты во 2 подъезде заменят</h1>
+<div class="card mt"><div class="bar" style="height:28px;border-radius:8px"><i style="flex:71;background:var(--deep);color:var(--on-deep);font-size:12px;font-weight:600;display:flex;align-items:center;padding-left:10px">За 71%</i><i style="flex:19;background:var(--peach)"></i><i style="flex:10;background:var(--line-2)"></i></div>
+<p class="xs mut mt2">Против 19%, воздержались 10%, явка 64%</p><p class="xs g b mt2">Вы голосовали «За», 4 ноября, 19:12</p></div>
+<div class="card mt2"><div class="b s">Что дальше</div>
+<div class="flex top-a mt s"><b style="width:60px;flex:none">до 1 дек</b><span>ОСИ подписывает договор с подрядчиком</span></div>
+<div class="flex top-a mt2 s"><b style="width:60px;flex:none">январь</b><span>Замена по одному лифту, второй работает</span></div>
+<div class="flex between s mt">Следить за работами${CK(1)}</div></div>`,
+foot:BT('Протокол №5, PDF','p','','doc')})};
+
+/* --- До года: жизнь дома и деньги --- */
+S['zones']={n:'Бронь общих зон',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Общие зоны</h1>
+<div data-radio style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" class="mt">
+<button class="opt on" style="margin:0;display:block;padding:9px"><b class="s" style="display:block">Барбекю</b><span class="xs mut">у 4 подъезда</span></button>
+<button class="opt" style="margin:0;display:block;padding:9px"><b class="s" style="display:block">Зал</b><span class="xs mut">до 30 человек</span></button>
+<button class="opt" style="margin:0;display:block;padding:9px"><b class="s" style="display:block">Коворкинг</b><span class="xs mut">6 мест</span></button></div>
+<div class="days mt" data-days><button>Пт<b>1</b></button><button class="on">Сб<b>2</b></button><button>Вс<b>3</b></button><button>Пн<b>4</b></button><button>Вт<b>5</b></button></div>
+<div class="two mt" data-slots><span class="slot x">12:00–15:00</span><button class="slot">15:00–18:00</button><button class="slot on">18:00–21:00</button><span class="slot x">21:00–23:00</span></div>
+<div class="card f mt"><div class="b s">Условия</div><p class="xs mut mt2">Бесплатно для жителей, залог за уголь и решётку [СУММА] ₸ вернётся после фото чистой зоны. Тишина после 23:00.</p></div>`,
+foot:`<div class="card dp flex between" style="padding:10px 12px"><span><b class="s" style="display:block">Сб, 2 ноября</b><span class="xs mut">Барбекю, 18:00–21:00</span></span><button class="btn lt sm auto">Забронировать</button></div>`})};
+
+S['passport']={n:'Паспорт квартиры',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Квартира 34</h1><div class="xs mut">68 м², 5 этаж, ключи с марта 2023</div>
+<div class="card dp mt"><div class="flex between"><b class="s">Показания счётчиков</b><span class="xs mut">до 25 октября</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" class="mt">${['Холодная|412,6','Горячая|208,1','Свет|9 340'].map(x=>{const[a,b]=x.split('|');return `<div style="background:var(--deep-2);border-radius:8px;padding:8px"><span class="xs mut" style="display:block">${a}</span><b>${b}</b></div>`}).join('')}</div>
+<div class="mt">${BT('Сфотографировать счётчики','lt sm','','camera')}</div></div>
+<div class="card mt2"><div class="b s">Техника и гарантии</div><div class="rows">${RW('Бойлер, 80 л','до мая 2027','plain')}${RW('Кондиционер','<span class="w">до дек 2026, скоро</span>','plain')}${RW('Окна от застройщика','до марта 2028','plain')}</div></div>
+<div class="card mt2"><div class="b s">Мои мастера</div><div class="chips mt2"><button class="chip" data-go="master">Ерлан, электрик</button><button class="chip" data-go="master">Айгерим, уборка</button></div></div>`})};
+
+const EV=(m,d,t,s,hl,go)=>`<button class="card ${hl?'wa':''} flex mt2" ${go?`data-go="${go}"`:''}><span class="dateb"><small>${m}</small><b>${d}</b></span><span class="grow"><b class="s" style="display:block">${t}</b><span class="xs mut">${s}</span></span></button>`;
+S['season']={n:'Сезон и лига',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Сезон в доме</h1>
+${EV('окт','28','Промывка батарей перед отоплением','Вместе дешевле, 12 квартир',1,'group-buy')}
+${EV('ноя','9','Шиномонтаж у шлагбаума','Выездная бригада, запись по слотам')}
+${EV('дек','21','Ёлка и ярмарка во дворе','Соседи-предприниматели продают своё',0,'business')}
+<div class="card dp mt"><div class="flex between"><b>Лига подъездов</b><span class="xs mut">до 30 ноября</span></div>
+<p class="xs mut mt2">Кто больше квартир приведёт в приложение. Победителю ОСИ моет окна в подъезде.</p>
+${[['2 подъезд',52],['3 подъезд',41],['1 подъезд',36]].map(([n,p],i)=>`<div class="flex mt s"><b style="width:12px">${i+1}</b><span style="width:76px">${n}</span><span class="grow">${PR(p*1.6,0,'lt')}</span><b style="width:34px;text-align:right">${p}%</b></div>`).join('')}
+<div class="mt">${BT('Позвать соседа из 1 подъезда','lt sm','invite')}</div></div>`})};
+
+S['crowd']={n:'Сбор на двор',h:()=>SCR({bcls:'flush',nav:'',body:`
+<div style="background:var(--mint-soft);height:150px;position:relative;display:grid;place-items:center;color:var(--primary)"><button class="nb" data-go="@back" style="position:absolute;left:12px;top:8px;background:var(--surface);color:var(--text);border-radius:50%" aria-label="Назад">${I('back',20)}</button>${I('building',48,1.5)}<span style="position:absolute;left:18px;bottom:12px">${BD('Проект ОСИ, одобрен голосованием')}</span></div>
+<div style="padding:14px var(--pad)"><h1 class="h1">Новая детская площадка с покрытием</h1>
+<div class="flex" style="align-items:baseline;gap:8px"><b style="font-size:26px">64%</b><span class="xs mut">[СУММА] ₸ из [ЦЕЛЬ] ₸</span></div>
+<div class="mt2">${PR(64)}</div><div class="xs mut mt2"><b style="color:var(--text)">83</b> квартиры, <b style="color:var(--text)">12</b> дней осталось</div>
+<div class="card mt rows" style="padding-top:2px;padding-bottom:2px">${RW('Смета и подрядчик','<span class="g b">PDF</span>','plain')}${RW('Если не соберём','вернём всем','plain')}</div>
+${LB('Ваш вклад')}${SEG(['[СУММА]','[СУММА]','Своя'],1)}</div>`,
+foot:`<p class="fine">Сервисный сбор [N]% включён, отчёт о тратах придёт после работ</p>${BT('Поддержать','p','home')}`})};
+
+S['leads']={n:'Лиды на ремонт',h:()=>SCR({nav:NAV(),body:`
+<div class="xs mut b">Остекление балкона, 6,2 м</div>
+<h1 class="h1">3 предложения за 2 часа</h1>
+<p class="sub">Только подрядчики, которые уже работали в Abay130. Размеры балкона взяли из типовой планировки.</p>
+<div data-radio>
+<button class="opt on" style="display:block"><span class="flex between"><b class="s">Тёплый балкон</b>${BD('Чаще выбирают соседи','m')}</span><span class="xs mut" style="display:block;margin-top:4px"><b style="color:var(--text)">[ЦЕНА] ₸</b>, 10 дней, 14 квартир в ЖК</span><span class="flex mt2" style="gap:6px">${PH('box',44,'sa').replace('style="height:44px"','style="height:44px;width:58px"')}${PH('box',44,'mi').replace('style="height:44px"','style="height:44px;width:58px"')}<span class="xs mut">Фото из кв. 58 и 112</span></span></button>
+<button class="opt" style="display:block"><b class="s">Окна Плюс</b><span class="xs mut" style="display:block;margin-top:4px"><b style="color:var(--text)">[ЦЕНА] ₸</b>, 14 дней, 6 квартир в ЖК</span></button>
+<button class="opt" style="display:block"><b class="s">ИП Сергеев</b><span class="xs mut" style="display:block;margin-top:4px"><b style="color:var(--text)">[ЦЕНА] ₸</b>, 7 дней, 3 квартиры в ЖК</span></button></div>`,
+foot:`<div class="two">${BT('Сравнить','o')}${BT('Позвать на замер','p')}</div>`})};
+
+S['parking']={n:'Аренда парковки',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Парковка</h1>${SEG(['Снять место','Сдать своё'],0)}
+<div class="card mt"><div class="b s">Паркинг, уровень −1</div>
+<div class="spots mt" data-spots>${[81,83,'87',85,'89',91].map(n=>`<${typeof n==='string'?'button':'span'} class="${n==='87'?'on':typeof n==='string'?'fr':''}">${typeof n==='string'?n:''}</${typeof n==='string'?'button':'span'}>`).join('')}</div>
+<div class="xs mut3 center" style="padding:6px 0">проезд</div>
+<div class="spots" data-spots><span></span><button class="fr">94</button><span></span><span></span><span></span><span></span></div></div>
+<div class="card mt2"><div class="flex between"><b>Место 87</b><b>[ЦЕНА] ₸/день</b></div><p class="xs mut mt2">Свободно 1–14 ноября, хозяин в отпуске</p><p class="xs mut mt2">Сдаёт Ержан, 2 подъезд. У шлагбаума ваш номер добавят автоматически.</p></div>`,
+foot:`<p class="fine">Оплата через приложение, сервисный сбор [N]%</p>${BT('Снять на 14 дней','p','home')}`})};
+
+/* --- До года: кабинет ОСИ --- */
+S['osi-cabinet']={n:'Кабинет ОСИ на сайте',wide:1,h:()=>`<div class="cab"><aside><b style="font-size:15px">ОСИ Abay130</b><div class="xs" style="opacity:.7">Кабинет председателя</div>
+<nav><button class="on">Обзор</button><button>Заявки</button><button>Платежи</button><button>Голосования</button><button>Объявления</button><button>Подрядчики</button></nav></aside>
+<main><div class="flex between"><span class="h1" style="margin:0">Ноябрь</span><button class="btn p sm auto" data-go="story">Новое объявление: пуш и сторис</button></div>
+<div class="kpis"><div class="kpi"><span class="xs mut">Взносы оплачены</span><b>78%</b><span class="xs g b">+21 п.п. с автоплатежом</span></div>
+<div class="kpi"><span class="xs mut">Открытые заявки</span><b>12</b><span class="xs w b">3 просрочены</span></div>
+<div class="kpi"><span class="xs mut">Среднее время решения</span><b>1,8 дня</b><span class="xs mut">было 4,2 в августе</span></div>
+<div class="kpi"><span class="xs mut">Квартир в приложении</span><b>64%</b><span class="xs mut">кворум доступен онлайн</span></div></div>
+<div style="display:grid;grid-template-columns:1.7fr 1fr;gap:10px;margin-top:10px">
+<div class="kpi"><b style="font-size:15px">Заявки, требующие решения</b><table class="tbl mt2"><thead><tr><th>№</th><th>Проблема</th><th>Жалоб</th><th>Статус</th></tr></thead><tbody>
+<tr><td>0418</td><td>Не горит свет, 3 подъезд, 7 этаж</td><td>6</td><td>${BD('Просрочена','wa')}</td></tr>
+<tr><td>0421</td><td>Хлопает дверь в подъезд 2</td><td>4</td><td>${BD('Назначена')}</td></tr>
+<tr><td>0425</td><td>Воды нет после 18:00, 1 подъезд</td><td>11</td><td>${BD('Срочно','wa')}</td></tr></tbody></table></div>
+<div class="kpi"><b style="font-size:15px">Голос жителей</b><p class="xs mt2">Опрос «Камера в лифт»: <b>21 за, 4 против</b>. Можно вынести на официальное голосование.</p><div class="mt2">${BT('Создать голосование','o sm','osi-vote')}</div><p class="xs mut mt">«Лавочки у 2 подъезда»: 68% за. Есть смета от 2 подрядчиков.</p></div></div></main></div>`};
+
+/* --- До 3 лет: умный дом и новоселье --- */
+S['newhome']={n:'Пакет новосёла',h:()=>SCR({nav:'<div style="height:10px"></div>',body:`
+<div class="flex xs mut b"><span class="tile f" style="width:28px;height:28px;font-size:8px">ЛОГО</span>От застройщика [ЗАСТРОЙЩИК]</div>
+<h1 class="h1 mt">С новосельем, кв. 112</h1><div class="xs mut">Ключи получены 1 ноября, 3 из 5 шагов</div><div class="mt2">${PR(60)}</div>
+<div class="card mt">
+<div class="flex s">${CK(1)}<span class="grow">Домофон и шлагбаум в телефоне</span></div>
+<div class="flex s mt">${CK(1)}<span class="grow">Начальные показания счётчиков</span></div>
+<div class="flex s mt">${CK(1)}<span class="grow">Чат новосёлов 4 подъезда</span><span class="xs mut">27 чел.</span></div>
+<div class="flex s mt">${CK(0)}<b class="grow">Подключить интернет</b><span class="xs g b">3 провайдера</span></div>
+<div class="flex s mt">${CK(0)}<b class="grow">Гарантийные замечания застройщику</b></div></div>
+<div class="card wa mt2"><div class="xs w b">Гарантия 2 года</div><p class="s mt2">Нашли трещину или продувает окно? Сфотографируйте, застройщик ответит в течение 5 рабочих дней.</p></div>`,
+foot:BT('Сообщить о замечании','p','','camera')})};
+
+S['access']={n:'Двери и камеры',h:()=>SCR({cls:'night',body:`
+<h1 class="h1 xl" style="margin-top:8px">Доступ</h1><div class="xs mut">Abay130, рядом с подъездом 1</div>
+<div class="card mt" style="background:var(--primary);color:var(--on-primary);border:0;padding:16px"><div class="flex between"><span><b style="font-size:17px;display:block">Подъезд 1</b><span class="xs" style="opacity:.8" data-unlock-t>Ближайшая дверь, 12 м</span></span><button class="unlock" data-act="unlock" aria-label="Открыть дверь">${I('lock',24)}</button></div></div>
+<div class="two mt2"><button class="nc" style="text-align:left;min-height:84px;display:grid;align-content:space-between">${I('barrier',22)}<b class="s">Шлагбаум</b></button><button class="nc" style="text-align:left;min-height:84px;display:grid;align-content:space-between">${I('gate',22)}<b class="s">Калитка</b></button></div>
+<div class="flex between mt3"><b class="s">Камеры двора</b><span class="xs mut">в реальном времени</span></div>
+<div class="two mt2"><div class="cam">Детская площадка</div><div class="cam">Парковка у шлагбаума</div></div>`,
+foot:BT('Пропуск для гостя или курьера','lt','guest','userplus')})};
+
+S['guest']={n:'Гостевой пропуск',h:()=>SCR({nav:NAV(),body:`
+<div class="card dp" style="padding:16px"><div class="flex between"><span class="xs mut b">Пропуск, Abay130</span>${BD('Активен','m')}</div>
+<div class="h1" style="color:var(--on-deep)">Мама, в гости</div>
+<div class="two mt2"><div><span class="xs mut" style="display:block">Когда</span><b class="s">Сегодня, 14:00–20:00</b></div><div><span class="xs mut" style="display:block">Куда</span><b class="s">Калитка, подъезд 1</b></div></div>
+<div class="center mt">${QR(132,29)}</div></div>
+<div class="card mt2"><div class="b s">История</div><div class="rows">${RW('Ссылка отправлена','13:02','plain')}${RW('<b>Гость прошёл через калитку</b>','<b>14:22</b>','plain')}</div></div>`,
+foot:`<div class="two">${BT('Отозвать','d')}${BT('Отправить ещё раз','p','','send')}</div>`})};
+
+const PRD=(t,c,q)=>`<div class="card" style="padding:8px">${PH('bag',62,c)}<b class="xs" style="display:block;margin-top:6px;line-height:1.25;min-height:30px">${t}</b><span class="flex between mt2"><b class="xs">[ЦЕНА]</b><button class="av" style="--s:24px;background:var(--primary);color:var(--on-primary)" data-qty aria-label="Добавить">${q?`<b class="xs">${q}</b>`:I('plus',14,2.4)}</button></span></div>`;
+S['shop']={n:'Лавка в доме',h:()=>SCR({nav:NAV(),body:`
+<div class="flex between top-a"><h1 class="h1" style="margin:0">Лавка в доме</h1>${BD('≈ 10 мин до двери','m')}</div>
+<p class="sub mt2">Склад на первом этаже 3 подъезда, курьер поднимется сам</p>
+<div class="mt">${CH(['Завтрак','Вода','Детское','Бытовое'],0,{row:1})}</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" class="mt">${PRD('Лепёшка, свежая','pe')}${PRD('Молоко 2,5%, 1 л','mi',2)}${PRD('Яйца С1, 10 шт','sa')}</div>
+<div class="card f flex top-a mt">${I('box',18)}<span class="xs">Захватить вашу посылку из пункта выдачи у шлагбаума? <b>Бесплатно в этом заказе</b></span></div>`,
+foot:`<div class="card dp flex between" style="padding:10px 12px"><span><b class="s" style="display:block">2 товара, [СУММА] ₸</b><span class="xs mut">доставка внутри ЖК бесплатно</span></span><button class="btn lt sm auto">Заказать</button></div>`})};
+
+/* --- До 3 лет: район и переезд --- */
+const RT=(t,v,w)=>`<div class="flex s mt2"><span style="width:100px">${t}</span><span class="grow">${PR(v*20,0,w?'wa':'')}</span><b style="width:26px;text-align:right">${String(v).replace('.',',')}</b></div>`;
+S['showcase']={n:'Витрина ЖК',h:()=>SCR({nav:'<div style="height:6px"></div>',body:`
+<div class="xs mut b">tredo.kz/abay130, открыто без регистрации</div>
+<h1 class="h1 mt2">Abay130 глазами жителей</h1><div class="xs mut">Алматы, Бостандыкский р-н, 5 подъездов, 2021</div>
+<div class="card mt"><div class="b s">Оценки из опросов жителей</div>${RT('Тишина',4.1)}${RT('Двор и дети',4.5)}${RT('Работа ОСИ',3.8)}${RT('Парковка',2.6,1)}</div>
+<div class="stats two mt2">${STAT('212','заявок решено за год','dp')}${STAT('1,8 дня','среднее время решения')}</div>
+<div class="card mt2"><div class="b s">Что говорят жители</div><p class="s mt2">«Двор закрытый, дети гуляют сами. Вечером тяжело с парковкой»</p><p class="xs mut3 mt2">Житель 3 подъезда, подтверждённый адрес</p></div>`,
+foot:BT('7 квартир в аренду и продажу, [ПОРТАЛ]','p')})};
+
+S['moving']={n:'Переезд',h:()=>SCR({nav:NAV(),body:`
+<h1 class="h1">Переезжаете?</h1>
+<div class="flex mt" style="gap:8px"><div class="card f" style="padding:8px 12px"><span class="xs mut" style="display:block">Было</span><b class="s">Abay130</b></div>${I('fwd',18)}<div class="card dp" style="padding:8px 12px"><span class="xs mut" style="display:block">Станет</span><b class="s">Хан-Тенгри</b></div></div>
+<div class="card m mt"><p class="xs"><b>Хан-Тенгри уже в приложении:</b> 41 сосед, чат вашего будущего подъезда и 3 мастера с отзывами.</p></div>
+${LB('Что переедет с вами')}<div class="card rows" style="padding-top:2px;padding-bottom:2px">${RW('Уровень «Надёжный сосед»',CK(1),'plain')}${RW('Мои мастера, 2',CK(1),'plain')}${RW('Номер авто',CK(1),'plain')}</div>
+${LB('Что оставить новым жильцам кв. 34')}<div class="card rows" style="padding-top:2px;padding-bottom:2px">${RW('Паспорт квартиры и гарантии',CK(1),'plain')}${RW('Приглашение в Abay130',CK(1),'plain')}</div>`,
+foot:BT('Переехать 1 декабря','p','home')})};
+
+/* ===== Разделы и подписи (из PDF) ===== */
+const SECTIONS=[
+{part:'Часть 1. Сценарии первого релиза',t:'1. Вход: адрес подтверждён',ids:['confirm','wrong-code','car','done'],note:'Заменяет «Адрес регистрации» → «Пароль» → «Успешно!». Пароль убран, вход только по SMS. Адрес подтверждается кодом подъезда (листовка у лифта, код меняется раз в месяц) или ссылкой от соседа; без подтверждения можно только читать ленту. Ошибка кода не тупик: попытки, причина и путь через соседа. Финал — первая польза и запрос пушей в момент, когда понятно зачем. Метрики: доля дошедших до «Готово», доля разрешивших пуши.'},
+{t:'2. Вход: ЖК ещё не подключён',ids:['not-connected','waitlist'],note:'Заменяет модалку «Провал! Ваш адрес не зарегистрирован». Человек остаётся в воронке: лист ожидания с порогом запуска, счётчиком и готовым текстом для чата дома. Порог 30 — пример, подберите под размер ЖК.'},
+{t:'3. Главная и отключения',ids:['home','outage','notifications','offline'],note:'В исходной ленте отключений нет, колокольчик никуда не ведёт. Отключение закреплено над лентой и имеет свою карточку: сроки, стояки, источник, напоминание утром и кнопка «воды нет» — данные для ОСИ и повод для B2B-разговора. Офлайн: показываем сохранённое и ставим сообщения в очередь.'},
+{t:'4. Кто перекрыл авто',ids:['car-search','car-found','car-free','car-unknown','car-note'],note:'Главный повод возвращаться в первом релизе. Номер авто собирается на онбординге. Сценарий заканчивается не отправкой, а «Выезд свободен» и благодарностью. Номера нет — записка с QR на лобовое: каждая ситуация превращается в приглашение. Повторные случаи предлагаем передать в ОСИ.'},
+{t:'5. Найти мастера',ids:['masters','master','request','status','review'],note:'В исходнике мастеров нет, есть только категория «Услуги». Сценарий доведён до отзыва: заявка → принял → выполнено → «рекомендую соседям». Доверие на «сосед из 4 подъезда» и «рекомендуют 8 соседей», а не на звёздах. Адрес и телефон мастер видит только после принятия. Платное место помечено «Реклама».'},
+{t:'6. Отдать вещь и поднять объявление',ids:['templates','giveaway','bump','invite','joined','my-listing'],note:'Заменяет общую форму «Новое объявление» на шаблон под задачу. После публикации — поднятие: платно или бесплатно за соседа. Цикл замкнут: приглашение → сосед подтвердил адрес → поднятие начислено → объявление наверху → отклики → «Отдано».'},
+{t:'7. Опрос соседей',ids:['poll-create','poll-results'],note:'Опрос мнений явно отделён от официального голосования ОСИ. Итог: явка по квартирам, лучший комментарий и «Передать в ОСИ» — мостик к платной подписке ОСИ на горизонте года.'},
+{t:'Пустые состояния',ids:['chats-empty','flea-empty'],note:'В исходнике пустые состояния — одна строка вроде «У вас нет активных объявлений». Здесь каждое ведёт к действию: чат подъезда, шаблоны постов, местные предприниматели (ручной посев барахолки).'},
+{part:'Часть 2. Дорожная карта',t:'Дом, сторис, экран блокировки, чат',ids:['home2','story','lock','chat-summary']},
+{t:'Барахолка, совместная покупка, доверие',ids:['flea-grid','group-buy','trust']},
+{t:'Релиз 1–2: услуги соседей и монетизация',ids:['help','task-done','business','digest']},
+{t:'До года: ОСИ в приложении',ids:['osi-request','osi-done','osi-fee','osi-paid','osi-vote','osi-decision']},
+{t:'До года: жизнь дома и деньги',ids:['zones','passport','season','crowd','leads','parking']},
+{t:'До года: кабинет ОСИ на сайте',ids:['osi-cabinet']},
+{t:'До 3 лет: умный дом и новоселье',ids:['newhome','access','guest','shop']},
+{t:'До 3 лет: район и переезд',ids:['showcase','moving']},
+];
+const NOTES={
+'home2':'Сторис с новостями ОСИ и «даром» просматриваются за секунды. Самое срочное (отключение с обратным отсчётом) крупно. Таб-бар оставлен как в части 1.',
+'story':'Объявление ОСИ на весь экран, реакция «Понятно» вместо простыни комментариев, ОСИ видит охват. Вопрос уходит в личку ОСИ, а не в общий чат.',
+'lock':'Live Activities: статус «Кто перекрыл» и отключение живут на экране блокировки, открывать приложение не нужно. Виджеты: охват подъезда и вода. В коде — нативный модуль (ActivityKit / Android widgets).',
+'chat-summary':'Краткий пересказ пропущенного. Реакции и ветки вместо «+» в общем потоке. Слеш-команды запускают сценарии прямо из чата.',
+'flea-grid':'Фото крупно, бейдж «Даром», подъезд вместо километров, аренда на день. Кнопка «Отдать или продать» всегда под рукой.',
+'group-buy':'Ступенчатая цена, прогресс до следующей ступени, деньги списываются только при сборе. Приглашение снижает цену всем — реферальность встроена в покупку.',
+'trust':'Репутация за полезные действия, а не звёзды. Каждая задача уровня — целевое действие продукта. Приватность видна прямо в профиле. Это же экран вкладки «Профиль».',
+'help':'Вынос мусора, выгул собак, доставка внутри ЖК силами студентов и подростков, только внутри дома и с согласием родителей для 14+.',
+'task-done':'Фото-подтверждение, оплата в приложении, чаевые и подписка «каждый вечер» — повторяемый низкий чек вместо разовой услуги.',
+'business':'Профиль соседа-предпринимателя как платное размещение. Доверие через «заказывали 31 сосед».',
+'digest':'Еженедельный дайджест и спонсор ЖК. Партнёрский блок помечен явно, это слот для спонсора района.',
+'osi-request':'Первая заявка в ОСИ со статусом. Похожие заявки объединяются, чтобы ОСИ видело масштаб, а не 11 дублей.',
+'osi-done':'Статус как у трекинга доставки, финал — подтверждение жителя «сухо / ещё течёт». Из этих ответов растёт метрика ОСИ для B2B-подписки.',
+'osi-fee':'Ежемесячные платежи ОСИ. Прозрачная разбивка и отчёт «на что ушли деньги» повышают собираемость.',
+'osi-paid':'Финал с социальным доказательством: процент оплативших в подъезде и сравнение с соседними. Автоплатёж включается по умолчанию.',
+'osi-vote':'Официальные голосования: кворум, голос по площади, документы и подтверждение по SMS.',
+'osi-decision':'Итог, протокол PDF и план работ с подпиской на обновления. Голосование ведёт к следующему действию.',
+'zones':'Бронирование зала, барбекю, коворкинга. Слоты и залог за уборку.',
+'passport':'Паспорт квартиры: счётчики, гарантии, свои мастера. Показания по фото.',
+'season':'Календарь сезонных групповых услуг и соревнование подъездов.',
+'crowd':'Краудфандинг улучшений двора с комиссией. Только проекты, одобренные голосованием, и возврат при недоборе.',
+'leads':'Лиды на крупный ремонт, оплата за лид от подрядчиков, с фото работ в вашем же доме.',
+'parking':'Комиссия с аренды парковки. Схема уровня и автодобавление номера в шлагбаум.',
+'osi-cabinet':'Подписка для ОСИ и УК. Председатель видит собираемость, просроченные заявки и голос жителей, превращает опрос в официальное голосование одной кнопкой. Главный B2B-продукт на горизонте года. Это веб, а не мобильное приложение.',
+'newhome':'Цифровой пакет новосела от застройщика, приложение выдают с ключами. Чек-лист и гарантийные замечания.',
+'access':'Домофон, шлагбаум и камеры в приложении — ежедневное использование. Кнопка замка кликабельна.',
+'guest':'Пропуск с QR, временем и историей прохода.',
+'shop':'Доставка и дарк-сторы, комиссия с доставки. Бонус дома: курьер заодно заберёт посылку у шлагбаума.',
+'showcase':'Витрина ЖК для соискателей жилья и партнёрство с порталами недвижимости. Публичная страница из данных опросов и заявок.',
+'moving':'Приложение переезжает с жильцом и приглашает в новый ЖК — сетевой эффект района.',
+};
+
+/* ===== Навигация прототипа ===== */
+const ORDER=SECTIONS.flatMap(s=>s.ids);
+const SEC_OF={};SECTIONS.forEach(s=>s.ids.forEach(id=>SEC_OF[id]=s));
+let PART='';SECTIONS.forEach(s=>{if(s.part)PART=s.part;s.p=PART});
+const phone=document.getElementById('phone'),side=document.getElementById('side'),info=document.getElementById('info'),pick=document.getElementById('pick');
+let cur=null;const hist=[];
+side.innerHTML=SECTIONS.map(s=>`${s.part?`<div class="part">${s.part}</div>`:''}<div class="sec">${s.t}</div>${s.ids.map(id=>`<button data-id="${id}"><span>${ORDER.indexOf(id)+1}</span>${S[id].n}</button>`).join('')}`).join('');
+pick.innerHTML=SECTIONS.map(s=>`<optgroup label="${s.t}">${s.ids.map(id=>`<option value="${id}">${ORDER.indexOf(id)+1}. ${S[id].n}</option>`).join('')}</optgroup>`).join('');
+function go(id,push=true){
+  if(id==='@back'){id=hist.pop()||ORDER[Math.max(0,ORDER.indexOf(cur)-1)];push=false}
+  if(!S[id])return;
+  if(push&&cur&&cur!==id)hist.push(cur);
+  cur=id;const s=S[id],sec=SEC_OF[id],i=ORDER.indexOf(id);
+  phone.className='phone'+(s.wide?' wide':'');phone.innerHTML=s.h();fit();document.getElementById('pcount').textContent=`${S[id].n}, ${i+1} из ${ORDER.length}`;
+  info.innerHTML=`<div class="crumb">${sec.p}</div><div class="crumb" style="margin-top:2px">${sec.t}</div><h2>${s.n}</h2><code>${id}</code> <span class="crumb">экран ${i+1} из ${ORDER.length}</span>
+  <p class="note">${NOTES[id]||sec.note||''}</p>
+  <div class="pn"><button data-nav="-1">← Предыдущий</button><button data-nav="1">Следующий →</button></div>
+  <p class="hint">Кнопки внутри экрана ведут по сценарию, чипсы и переключатели нажимаются. Стрелки ← → на клавиатуре листают экраны по порядку.</p>`;
+  side.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
+  
+  pick.value=id;
+  try{history.replaceState(null,'','#'+id)}catch(e){}
+}
+function step(d){const i=ORDER.indexOf(cur);go(ORDER[(i+d+ORDER.length)%ORDER.length])}
+side.addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)go(b.dataset.id)});
+pick.addEventListener('change',()=>go(pick.value));
+info.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(b)step(+b.dataset.nav)});
+document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea'))return;if(e.key==='ArrowRight')step(1);if(e.key==='ArrowLeft')step(-1)});
+phone.addEventListener('click',e=>{
+  const t=e.target;
+  const chip=t.closest('.chip');
+  if(chip&&chip.parentElement.matches('[data-single],[data-multi]')){const g=chip.parentElement;
+    if(g.hasAttribute('data-multi'))chip.classList.toggle('on');else g.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===chip));
+    g.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c.classList.contains('on')))}
+  const sb=t.closest('[data-seg]>button');if(sb){sb.parentElement.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b===sb);b.setAttribute('aria-pressed',b===sb)})}
+  const ck=t.closest('.chk');if(ck){ck.classList.toggle('on');ck.setAttribute('aria-checked',ck.classList.contains('on'))}
+  const op=t.closest('[data-radio]>.opt');if(op){op.parentElement.querySelectorAll('.opt').forEach(o=>o.classList.toggle('on',o===op))}
+  const po=t.closest('[data-poll]>.pollo');if(po){po.parentElement.querySelectorAll('.pollo').forEach(o=>o.classList.toggle('on',o===po))}
+  const dy=t.closest('[data-days]>button');if(dy){dy.parentElement.querySelectorAll('button').forEach(o=>o.classList.toggle('on',o===dy))}
+  const sl=t.closest('[data-slots]>button');if(sl){sl.parentElement.querySelectorAll('button').forEach(o=>o.classList.toggle('on',o===sl))}
+  const sp=t.closest('[data-spots]>button');if(sp){phone.querySelectorAll('[data-spots]>button').forEach(o=>{o.classList.toggle('on',o===sp);o.classList.toggle('fr',o!==sp)})}
+  const ul=t.closest('[data-act="unlock"]');if(ul){const open=!ul.classList.contains('on');ul.classList.toggle('on',open);ul.innerHTML=I(open?'unlock':'lock',24);const l=phone.querySelector('[data-unlock-t]');if(l)l.textContent=open?'Открыто на 5 секунд':'Ближайшая дверь, 12 м';if(open)setTimeout(()=>{if(ul.isConnected){ul.classList.remove('on');ul.innerHTML=I('lock',24);if(l)l.textContent='Ближайшая дверь, 12 м'}},5000)}
+  const g=t.closest('[data-go]');if(g){e.preventDefault();go(g.dataset.go)}
+});
+
+/* ===== Масштаб под экран, панель экранов, подсветка зон ===== */
+const pscale=document.getElementById('pscale'),drawer=document.getElementById('drawer'),scrimd=document.getElementById('scrimd');
+function fit(){const m=innerWidth<=520;const w=phone.offsetWidth,h=phone.offsetHeight;
+  if(m&&!phone.classList.contains('wide')){phone.style.width=innerWidth+'px';phone.style.height=innerHeight+'px';pscale.style.transform='none';return}
+  phone.style.width='';phone.style.height='';
+  const aw=innerWidth-(m?0:32),ah=innerHeight-(m?0:56)-24;const k=Math.min(1,aw/phone.offsetWidth,ah/phone.offsetHeight);pscale.style.transform=`scale(${k})`}
+addEventListener('resize',fit);
+function openD(){drawer.hidden=false;scrimd.hidden=false;const on=side.querySelector('button.on');if(on)on.scrollIntoView({block:'center'})}
+function closeD(){drawer.hidden=true;scrimd.hidden=true}
+document.getElementById('openDrawer').onclick=openD;document.getElementById('closeDrawer').onclick=closeD;scrimd.onclick=closeD;
+document.getElementById('restart').onclick=()=>{hist.length=0;go('confirm',false)};
+side.addEventListener('click',e=>{if(e.target.closest('[data-id]'))closeD()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeD()});
+phone.addEventListener('click',e=>{if(!e.target.closest('button,[data-go],.chip,.chk,.opt,.pollo,a')){phone.classList.add('hint');clearTimeout(phone._h);phone._h=setTimeout(()=>phone.classList.remove('hint'),700)}});
+go(S[location.hash.slice(1)]?location.hash.slice(1):'confirm',false);
+
+</script>
+<script>
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
