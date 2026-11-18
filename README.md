@@ -24,10 +24,6 @@ node build.mjs        # или npm run build
 
 Сборка склеивает `src/template.html`, стили из `src/styles/` и скрипты из `src/js/` в порядке номеров в именах файлов. Порядок важен: модули объявляют глобальные константы и используют их друг у друга.
 
-## GitHub
-
-Workflow `.github/workflows/build.yml` на каждый push в `main` собирает приложение, кладёт сборку в артефакт запуска (Actions → запуск → Artifacts → `sosedi-build`) и публикует прототип на GitHub Pages. Тег `v*` создаёт релиз с архивом сборки. Для Pages один раз включите Settings → Pages → Source: GitHub Actions.
-
 ## Скачать сборку из GitLab
 
 Каждый запуск CI собирает `dist/index.html` и `dist/capabilities.json`. Последняя сборка ветки `main`:

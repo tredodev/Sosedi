@@ -1,0 +1,56 @@
+# Сборка, скачивание, релизы по тегам и публикация устанавливаемого прототипа (PWA) на GitLab Pages.
+#
+# Последняя сборка ветки main одним архивом:
+#   https://<gitlab>/<группа>/<проект>/-/jobs/artifacts/main/download?job=build
+
+stages: [build, release, deploy]
+
+build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - node build.mjs
+    - cp capabilities.json dist/
+    # Устанавливаемый прототип: страница, манифест, офлайн-кэш, иконки
+    - mkdir -p dist/prototype
+    - cp prototype/index.html dist/prototype/index.html
+    - cp -r pwa/. dist/prototype/
+    - sed -i "s/__BUILD__/$CI_COMMIT_SHORT_SHA/" dist/prototype/sw.js
+  artifacts:
+    name: "sosedi-$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA"
+    paths: [dist/]
+    expire_in: never
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs: [build]
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Релиз $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Соседи $CI_COMMIT_TAG"
+    description: "Сборка Соседей. dist/index.html — рабочая версия для публикации артефактом claude.ai (возможности в capabilities.json). dist/prototype — прототип, который устанавливается на телефон с GitLab Pages."
+    assets:
+      links:
+        - name: "Сборка целиком (zip)"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/download?job=build"
+          link_type: package
+        - name: "Рабочая версия, index.html"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/dist/index.html?job=build"
+          link_type: other
+
+pages:
+  stage: deploy
+  image: node:20-alpine
+  needs: [build]
+  script:
+    - mkdir -p public/app
+    - cp -r dist/prototype/. public/
+    - cp dist/index.html public/app/index.html
+  artifacts:
+    paths: [public]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
